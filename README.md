@@ -1,10 +1,9 @@
-> [!CAUTION]
-> You are too early here! I'm still waiting for stores to approve the plugin for you to use! But if you know what you are doing, feel free to stay, otherwise, please, comeback later!
-
-
 # PoE2Dire
 
-Extension to rendering Path of Exile patch notes in a Dota2-style layout (Enghlish only at this moment). [For this reddit thread](https://www.reddit.com/r/PathOfExile2/comments/1tkazjr/can_someone_explain_to_me_why_ggg_doesnt_present/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button)
+Extension to rendering Path of Exile patch notes in a Dota2-style layout (Enghlish only at this moment). 
+[For this reddit thread](https://www.reddit.com/r/PathOfExile2/comments/1tkazjr/can_someone_explain_to_me_why_ggg_doesnt_present/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button). 
+
+It's not perfect, but neither am I.
 
 <img width="1280" height="800" alt="01-overview" src="https://github.com/user-attachments/assets/4efc326c-270c-4a18-b46b-d3ca8be557a6" />
 <img width="1201" height="1021" alt="showcase" src="https://github.com/user-attachments/assets/c41b4e58-084c-4a46-969e-76e239129df7" />
@@ -21,7 +20,8 @@ It still declares access to `poewiki.net` and `poe2wiki.net` for icons lookup.
 
 ## How to use?
 
-1. Go to any poe patch note forum page ([like this hot one](https://www.pathofexile.com/forum/view-thread/3932540))
+0. Install for your browser [Chrome](https://chromewebstore.google.com/detail/paekoknkbpfidmpabiikofkemegpfgnh?utm_source=item-share-cb)/[Firefox](https://addons.mozilla.org/en-US/firefox/addon/poe2dire/)
+1. Go to any path of exile patch notes forum page ([this one is hot rn](https://www.pathofexile.com/forum/view-thread/3932540))
 2. Click PoE2Dire icon on top to activate it <img width="114" height="79" alt="image" src="https://github.com/user-attachments/assets/2b800f16-d7a4-4f35-b4cc-65940e61ee31" /> (if you don't see it, you need to pin it, use mosaic icon, find it, click it there)
 3. Done
 4. You can click it again to deactivate, or simply reload.
@@ -46,11 +46,11 @@ The second feature of this extension is the ability to search by just start typi
 
 ### Install on Chrome
 
-[Chrome WebStore](https://chromewebstore.google.com/detail/paekoknkbpfidmpabiikofkemegpfgnh?utm_source=item-share-cb) - Waiting for approval
+[Chrome WebStore](https://chromewebstore.google.com/detail/paekoknkbpfidmpabiikofkemegpfgnh?utm_source=item-share-cb)
 
 ### Install on Firefox
 
-[Firefox Browser Add-ons Page](https://addons.mozilla.org/en-US/firefox/addon/poe2dire/) - Waiting for approval
+[Firefox Browser Add-ons Page](https://addons.mozilla.org/en-US/firefox/addon/poe2dire/)
 
 
 ### Do you guys have phones?
