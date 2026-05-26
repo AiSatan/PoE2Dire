@@ -1,6 +1,6 @@
 # PoE2Dire
 
-Extension to rendering Path of Exile patch notes in a Dota2-style layout (Enghlish only at this moment). 
+Extension for rendering Path of Exile patch notes in a Dota2-style layout (English only at this moment). 
 [For this reddit thread](https://www.reddit.com/r/PathOfExile2/comments/1tkazjr/can_someone_explain_to_me_why_ggg_doesnt_present/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button). 
 
 It's not perfect, but neither am I.
@@ -15,14 +15,14 @@ The extension only injects on:
 https://www.pathofexile.com/forum/*
 ```
 
-It still declares access to `poewiki.net` and `poe2wiki.net` for icons lookup.
+It still declares access to `poewiki.net` and `poe2wiki.net` for icon lookup.
 
 
 ## How to use?
 
 0. Install for your browser [Chrome](https://chromewebstore.google.com/detail/paekoknkbpfidmpabiikofkemegpfgnh?utm_source=item-share-cb)/[Firefox](https://addons.mozilla.org/en-US/firefox/addon/poe2dire/)
-1. Go to any path of exile patch notes forum page ([this one is hot rn](https://www.pathofexile.com/forum/view-thread/3932540))
-2. Click PoE2Dire icon on top to activate it <img width="114" height="79" alt="image" src="https://github.com/user-attachments/assets/2b800f16-d7a4-4f35-b4cc-65940e61ee31" /> (if you don't see it, you need to pin it, use mosaic icon, find it, click it there)
+1. Go to any Path of Exile patch notes forum page ([this one is hot rn](https://www.pathofexile.com/forum/view-thread/3932540))
+2. Click the PoE2Dire icon on top to activate it <img width="114" height="79" alt="image" src="https://github.com/user-attachments/assets/2b800f16-d7a4-4f35-b4cc-65940e61ee31" /> (if you don't see it, you need to pin it, use the mosaic icon, find it, click it there)
 3. Done
 4. You can click it again to deactivate, or simply reload.
 
@@ -32,10 +32,10 @@ It still declares access to `poewiki.net` and `poe2wiki.net` for icons lookup.
 > [!NOTE]
 > This works only if you installed via Chrome/Firefox extension
 
-The second feature of this extension is the ability to search by just start typing. 
+The second feature of this extension is the ability to search by just starting to type. 
 - Yes, just start typing, for example, type `traps`, until you realize `There is no Carol in H.R`. 
-- You can click enter to move to the next result. 
-- It auto clear after 2 seconds, so you can easily start searching for a new thing next, so try to search for `daggers` next.
+- You can press `Enter` to move to the next result. 
+- It clears automatically after 2 seconds, so you can easily start searching for a new thing next, so try to search for `daggers` next.
 
 
 ## Install options
@@ -58,13 +58,13 @@ The second feature of this extension is the ability to search by just start typi
 This is for phones or browsers where you cannot/don't want to install the extension. 
 
 > [!NOTE]
-> Some mobile browsers can block bookmarklet scripts, so this may not work for everyone, tested on `Android` with `Brave`. Feel free to open an issue, maybe someone would have solution for your case, or at least suggests you a different phone :)
+> Some mobile browsers can block bookmarklet scripts, so this may not work for everyone, tested on `Android` with `Brave`. If it's not working for you, feel free to open an issue, maybe someone has a solution for your case.
 
 > [!CAUTION]
 > This will download the remote code (`https://aisatan.github.io/PoE2Dire/PoE2Dire-bookmarklet.js`) and **execute** it with your browser.
-> It's not required - but I **strongly suggest** to stay safe and use the **incognite mode**.
+> It's not required - but I **strongly suggest** to stay safe and use the **incognito mode**.
 
-Video installation on my phone (brave browser): 
+Video installation on my phone (Brave browser): 
 
 https://github.com/user-attachments/assets/a034d803-7d16-443c-8e9b-e5f683d9e309
 
@@ -81,9 +81,9 @@ How to use it:
 1. Create a browser bookmark (any site will do)
 2. Edit the bookmark URL and Name.
 3. Paste the full `javascript:` code above as the bookmark URL.
-4. Put some easy accessable name, like `0000 poe2dire`
+4. Put some easy accessible name, like `0000 poe2dire`
 5. Open a Path of Exile forum patch-notes page.
-6. Run the bookmark (in the most browsers you can write the name of the bookmark to see and activate it)
+6. Run the bookmark (in most browsers you can write the name of the bookmark to see and activate it)
 
 
 ## Not working for you?
@@ -100,7 +100,7 @@ But, keep in mind, my decades of writing hacky js code might feel strange, cause
 
 ## Support 🌠
 
-Please, consider any of this little support options:
+Please, consider any of these little support options:
 
 ⭐ Leave a GitHub Star ⭐
 
