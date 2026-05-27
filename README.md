@@ -64,6 +64,8 @@ The second feature of this extension is the ability to search by just starting t
 
 I hope you already know how to install script for your monkey, you can download the `PoE2Dire.user.js` script from [GitHub Releases](https://github.com/aisatan/PoE2Dire/releases) page. 
 
+> Rumor has it: "You can hyperlink to the raw .js which leads directly to install page so no need for DL etc. Install the https://github.com/AiSatan/PoE2Dire/releases/download/v1.0.1/PoE2Dire.user.js"
+
 In short, it goes like this:
 
 1. Download `PoE2Dire.user.js` file from [GitHub Releases](https://github.com/aisatan/PoE2Dire/releases).
