@@ -91,7 +91,7 @@ jobs:
           > [Chrome WebStore](https://chromewebstore.google.com/detail/paekoknkbpfidmpabiikofkemegpfgnh?utm_source=item-share-cb)
           >
           > ### Install on Firefox
-          > [Firefox Browser Add-ons Page](https://addons.mozilla.org/en-US/firefox/addon/poe2dire/) (NOT live yet, Awaiting Review!)
+          > [Firefox Browser Add-ons Page](https://addons.mozilla.org/en-US/firefox/addon/poe2dire/)
           >
           > Userscript users: install the `PoE2Dire.user.js` release asset with Tampermonkey or Violentmonkey.
           EOF
