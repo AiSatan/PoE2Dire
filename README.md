@@ -62,7 +62,7 @@ The second feature of this extension is the ability to search by just starting t
 > [!CAUTION]
 > This is for people who know what userscripts are
 
-I hope you already know how to install script for your monkey, you can download the `PoE2Dire.user.js` script from [GitHub Releases](https://github.com/aisatan/PoE2Dire/releases) page. 
+I hope you already know how to install script for your monkey, you can download the `PoE2Dire.user.js` script from [GitHub Releases](https://github.com/aisatan/PoE2Dire/releases) page. Here's a video example for ViolentMonkey: [https://www.youtube.com/watch?v=cgWVGSAxoEY](https://www.youtube.com/watch?v=cgWVGSAxoEY)
 
 > Rumor has it: "You can hyperlink to the raw .js which leads directly to install page so no need for DL etc. Install the https://github.com/AiSatan/PoE2Dire/releases/download/v1.0.1/PoE2Dire.user.js"
 
@@ -73,7 +73,7 @@ In short, it goes like this:
 3. Install it in your userscript manager.
 4. On a Path of Exile forum patch notes page, use the userscript manager menu and click `Toggle PoE2Dire`.
 
-I've tested this only on Firefox with Tampermonkey, feel free to open an issue, if it's not working for you. 
+I've tested this only on Firefox with Tampermonkey and ViolentMonkey, feel free to open an issue, if it's not working for you. 
 
 
 ### Do you guys have phones?
