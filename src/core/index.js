@@ -81,6 +81,17 @@
     });
   }
 
+  function setupUserscriptMenu() {
+    const registerMenuCommand = userscriptMenuCommand();
+    if (!registerMenuCommand) return;
+
+    registerMenuCommand("Toggle PoE2Dire", () => {
+      toggleCurrentPage().catch((error) => {
+        console.warn("[PoE2Dire] Toggle failed:", error);
+      });
+    });
+  }
+
   async function toggleCurrentPage() {
     if (document.getElementById("PoE2Dire-root")) {
       destroyPatchPage(document);
@@ -100,8 +111,17 @@
     return null;
   }
 
+  function userscriptMenuCommand() {
+    if (typeof GM_registerMenuCommand === "function") return GM_registerMenuCommand;
+    if (typeof GM !== "undefined" && typeof GM.registerMenuCommand === "function") {
+      return GM.registerMenuCommand.bind(GM);
+    }
+    return null;
+  }
+
   setupExtensionMessages();
-  if (!extensionApi()?.runtime?.id) {
+  setupUserscriptMenu();
+  if (!extensionApi()?.runtime?.id && !userscriptMenuCommand()) {
     run().catch((error) => {
       console.warn("[PoE2Dire] Startup failed:", error);
     });

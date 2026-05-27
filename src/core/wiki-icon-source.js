@@ -119,21 +119,7 @@
     url.searchParams.set("iiprop", "url");
     url.searchParams.set("iiurlwidth", String(ICON_THUMB_WIDTH));
 
-    try {
-      return await fetchImageInfoDirect(url.toString());
-    } catch (error) {
-      return fetchJsonWithRetry(url.toString());
-    }
-  }
-
-  async function fetchImageInfoDirect(url) {
-    const response = await fetch(url);
-    const contentType = response.headers.get("Content-Type") || "";
-    if (!response.ok || !contentType.toLowerCase().includes("json")) {
-      throw new Error(`${response.status} ${response.statusText}`);
-    }
-
-    return response.json();
+    return fetchJsonWithRetry(url.toString());
   }
 
   function normalFileTitle(title) {

@@ -16,6 +16,7 @@ const TARGETS = ["chrome", "firefox"];
 
 const CORE_FILE = `${PROJECT_NAME}-core.js`;
 const BOOKMARKLET_FILE = `${PROJECT_NAME}-bookmarklet.js`;
+const USERSCRIPT_FILE = `${PROJECT_NAME}.user.js`;
 const CORE_CSS_FILE = "styles.css";
 const PRIVACY_PAGE_FILE = "privacy.html";
 
@@ -54,6 +55,12 @@ function main() {
   const bookmarkletPath = path.join(DIST, "gist", BOOKMARKLET_FILE);
   fs.mkdirSync(path.dirname(bookmarkletPath), { recursive: true });
   fs.writeFileSync(bookmarkletPath, buildCoreBundle(css));
+
+  const typeSearchCss = fs.readFileSync(path.join(SRC, "extension", "type-search.css"), "utf8");
+  const userscriptPath = path.join(DIST, "userscript", USERSCRIPT_FILE);
+  fs.mkdirSync(path.dirname(userscriptPath), { recursive: true });
+  fs.writeFileSync(userscriptPath, buildUserscript(`${css}\n${typeSearchCss}`));
+
   copyFile(
     path.join(SRC, "pages", PRIVACY_PAGE_FILE),
     path.join(DIST, "gist", PRIVACY_PAGE_FILE)
@@ -112,6 +119,34 @@ function buildCoreBundle(styles) {
     "",
     parts.join("\n\n"),
     "})();",
+    "",
+  ].join("\n");
+}
+
+function buildUserscript(styles) {
+  const typeSearch = fs.readFileSync(path.join(SRC, "extension", "type-search.js"), "utf8").trimEnd();
+  return [
+    userscriptHeader(),
+    buildCoreBundle(styles),
+    typeSearch,
+    "",
+  ].join("\n");
+}
+
+function userscriptHeader() {
+  return [
+    "// ==UserScript==",
+    `// @name        ${PROJECT_NAME}`,
+    "// @namespace   https://github.com/aisatan/PoE2Dire",
+    `// @version     ${packageJson.version}`,
+    "// @description Render Path of Exile patch notes in a Dota-style format.",
+    "// @match       https://www.pathofexile.com/forum/*",
+    "// @run-at      document-idle",
+    "// @grant       GM_xmlhttpRequest",
+    "// @grant       GM_registerMenuCommand",
+    "// @connect     www.poe2wiki.net",
+    "// @connect     www.poewiki.net",
+    "// ==/UserScript==",
     "",
   ].join("\n");
 }

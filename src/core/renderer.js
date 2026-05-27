@@ -276,16 +276,20 @@
     if (!isWikiImageUrl(url)) return url;
 
     const api = extensionApi();
-    if (!api?.runtime?.id || !api.runtime.sendMessage) return url;
+    if (!api?.runtime?.id || !api.runtime.sendMessage) {
+      const userscriptRequest = userscriptXmlHttpRequest();
+      if (!userscriptRequest) return url;
+      return cachedWikiImageProxy(userscriptRequest, url, fetchWikiImageViaUserscript);
+    }
 
-    return cachedWikiImageProxy(api, url);
+    return cachedWikiImageProxy(api, url, fetchWikiImageViaExtension);
   }
 
-  function cachedWikiImageProxy(api, url) {
+  function cachedWikiImageProxy(proxy, url, fetchImage) {
     const cached = iconImageCache.get(url);
     if (cached) return cached;
 
-    const request = queueWikiImageProxy(api, url).catch((error) => {
+    const request = queueWikiImageProxy(proxy, url, fetchImage).catch((error) => {
       iconImageCache.delete(url);
       throw error;
     });
@@ -293,9 +297,9 @@
     return request;
   }
 
-  function queueWikiImageProxy(api, url) {
+  function queueWikiImageProxy(proxy, url, fetchImage) {
     return new Promise((resolve, reject) => {
-      iconImageQueue.push({ api, url, resolve, reject });
+      iconImageQueue.push({ proxy, url, fetchImage, resolve, reject });
       drainIconImageQueue();
     });
   }
@@ -305,7 +309,7 @@
     while (activeIconImageRequests < limit && iconImageQueue.length) {
       const job = iconImageQueue.shift();
       activeIconImageRequests += 1;
-      fetchWikiImageViaExtension(job.api, job.url)
+      job.fetchImage(job.proxy, job.url)
         .then(job.resolve, job.reject)
         .finally(() => {
           activeIconImageRequests -= 1;
@@ -336,6 +340,75 @@
     }
 
     throw new Error(lastResponse?.statusText || "Image proxy failed");
+  }
+
+  async function fetchWikiImageViaUserscript(request, url) {
+    let lastResponse = null;
+    for (let attempt = 0; attempt <= CONFIG.network.retries; attempt += 1) {
+      const response = await userscriptImageDataUrl(request, url);
+      if (response?.ok && response.dataUrl) return response.dataUrl;
+
+      lastResponse = response || { status: 0, statusText: "Network Error", retryAfter: "" };
+      if (attempt === CONFIG.network.retries || !isRetryableIconResponse(response)) break;
+      await delay(retryDelayMs(lastResponse, attempt));
+    }
+
+    throw new Error(lastResponse?.statusText || "Image proxy failed");
+  }
+
+  function userscriptImageDataUrl(request, url) {
+    return requestViaUserscript(
+      request,
+      {
+        method: "GET",
+        url,
+        responseType: "arraybuffer",
+        timeout: 30000,
+      },
+      formatUserscriptImageResponse
+    );
+  }
+
+  function formatUserscriptImageResponse(response) {
+    const headers = response?.responseHeaders || "";
+    const contentType = userscriptHeader(headers, "content-type");
+    const cfMitigated = userscriptHeader(headers, "cf-mitigated");
+    const retryAfter = userscriptHeader(headers, "retry-after");
+    const status = Number(response?.status) || 0;
+    const statusText = response?.statusText || (status ? "OK" : "Network Error");
+    const isImage = contentType.toLowerCase().startsWith("image/");
+    const mediaStatus = statusForMedia(status, statusText, isImage);
+
+    if (!(status >= 200 && status < 300) || !isImage) {
+      return {
+        proxied: true,
+        ok: false,
+        status: mediaStatus.status,
+        statusText: mediaStatus.statusText,
+        retryAfter,
+        cfMitigated,
+        contentType,
+      };
+    }
+
+    return {
+      proxied: true,
+      ok: true,
+      status,
+      statusText,
+      retryAfter,
+      cfMitigated,
+      contentType,
+      dataUrl: `data:${contentType};base64,${base64Encode(new Uint8Array(response.response))}`,
+    };
+  }
+
+  function base64Encode(bytes) {
+    let binary = "";
+    for (const byte of bytes) {
+      binary += String.fromCharCode(byte);
+    }
+    return btoa(binary);
   }
 
   function isRetryableIconResponse(response) {
