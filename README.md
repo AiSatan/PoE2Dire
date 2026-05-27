@@ -29,6 +29,8 @@ It still declares access to `poewiki.net` and `poe2wiki.net` for icon lookup.
 3. Done
 4. You can click it again to deactivate, or simply reload.
 
+Video example: [https://www.youtube.com/watch?v=ES66rQrVNQY](https://www.youtube.com/watch?v=ES66rQrVNQY)
+
 
 ## Dota2 Style Search Feature
 
