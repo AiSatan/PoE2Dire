@@ -1,3 +1,6 @@
+> [!NOTE]
+> PoE2Dire is an unofficial fan-made project and is not affiliated with, associated with, endorsed by, or sponsored by Grinding Gear Games or Path of Exile.
+
 # PoE2Dire
 
 Extension for rendering Path of Exile patch notes in a Dota2-style layout (English only at this moment). 
