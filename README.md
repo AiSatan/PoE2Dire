@@ -50,7 +50,7 @@ The second feature of this extension is the ability to search by just starting t
 
 ### Install on Firefox
 
-[Firefox Browser Add-ons Page](https://addons.mozilla.org/en-US/firefox/addon/poe2dire/)
+[Firefox Browser Add-ons Page](https://addons.mozilla.org/en-US/firefox/addon/poe2dire/) (NOT live yet, Awaiting Review!)
 
 
 ### Do you guys have phones?
