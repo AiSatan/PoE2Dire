@@ -89,6 +89,7 @@ jobs:
             dist/packages/PoE2Dire-chrome.zip \
             dist/packages/PoE2Dire-firefox.zip \
             dist/gist/PoE2Dire-bookmarklet.js \
+            dist/userscript/PoE2Dire.user.js \
             --title "$GITHUB_REF_NAME" \
             --generate-notes \
             --verify-tag
