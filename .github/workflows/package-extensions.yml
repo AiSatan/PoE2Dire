@@ -81,15 +81,32 @@ jobs:
       - name: Build packages
         run: npm run pack
 
+      - name: Write release notes prefix
+        run: |
+          cat > release-notes-prefix.md <<'EOF'
+          > [!NOTE]
+          > Please read installation instructions on the main page, you don't have to download anything.
+          >
+          > ### Install on Chrome
+          > [Chrome WebStore](https://chromewebstore.google.com/detail/paekoknkbpfidmpabiikofkemegpfgnh?utm_source=item-share-cb)
+          >
+          > ### Install on Firefox
+          > [Firefox Browser Add-ons Page](https://addons.mozilla.org/en-US/firefox/addon/poe2dire/) (NOT live yet, Awaiting Review!)
+          >
+          > Userscript users: install the `PoE2Dire.user.js` release asset with Tampermonkey or Violentmonkey.
+          EOF
+
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          RELEASE_NOTES="$(cat release-notes-prefix.md)"
           gh release create "$GITHUB_REF_NAME" \
             dist/packages/PoE2Dire-chrome.zip \
             dist/packages/PoE2Dire-firefox.zip \
             dist/gist/PoE2Dire-bookmarklet.js \
             dist/userscript/PoE2Dire.user.js \
             --title "$GITHUB_REF_NAME" \
+            --notes "$RELEASE_NOTES" \
             --generate-notes \
             --verify-tag
