@@ -55,7 +55,7 @@ The second feature of this extension is the ability to search by just starting t
 
 [Chrome WebStore](https://chromewebstore.google.com/detail/paekoknkbpfidmpabiikofkemegpfgnh?utm_source=item-share-cb)
 
-### Install on Firefox
+### Install on Firefox (works for firefox mobile as well)
 
 [Firefox Browser Add-ons Page](https://addons.mozilla.org/en-US/firefox/addon/poe2dire/)
 
