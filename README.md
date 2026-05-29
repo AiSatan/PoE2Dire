@@ -4,7 +4,9 @@
 # PoE2Dire
 
 Extension for rendering Path of Exile patch notes in a Dota2-style layout (English only at this moment). 
-[For this reddit thread](https://www.reddit.com/r/PathOfExile2/comments/1tkazjr/can_someone_explain_to_me_why_ggg_doesnt_present/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button). 
+[Based on this reddit thread](https://www.reddit.com/r/PathOfExile2/comments/1tkazjr/can_someone_explain_to_me_why_ggg_doesnt_present/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button). 
+
+[Reddit thread](https://www.reddit.com/r/PathOfExile2/comments/1toxfei/dota2_style_patch_notes_browser_extension/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button) of the extension in Path of Exile 2 sub.
 
 It's not perfect, but neither am I.
 
@@ -55,7 +57,7 @@ The second feature of this extension is the ability to search by just starting t
 
 ### Install on Firefox
 
-[Firefox Browser Add-ons Page](https://addons.mozilla.org/en-US/firefox/addon/poe2dire/) (NOT live yet, Awaiting Review!)
+[Firefox Browser Add-ons Page](https://addons.mozilla.org/en-US/firefox/addon/poe2dire/)
 
 ### Install as an userscripts
 
