@@ -7,6 +7,8 @@
     wikiLookupConcurrency: 2,
     wikiRequestConcurrency: 1,
     wikiImageConcurrency: 2,
+    wikiBatchSize: 40,
+    iconThumbWidth: 108,
     fallbackIcon: "https://www.poewiki.net/images/b/b6/Scroll_of_Wisdom_inventory_icon.png",
     cache: {
       namespacePrefix: "PoE2DireCache",
@@ -23,6 +25,13 @@
       maxRetryDelayMs: 30000,
       challengeCooldownMs: 60000,
       maxCooldownMs: 120000,
+      userscriptTimeoutMs: 30000,
+    },
+    ui: {
+      tooltipShowDelayMs: 500,
+      keywordShowDelayMs: 220,
+      tooltipHideDelayMs: 120,
+      statusErrorHideMs: 8000,
     },
   };
 

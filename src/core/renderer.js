@@ -598,7 +598,7 @@
         method: "GET",
         url,
         responseType: "arraybuffer",
-        timeout: 30000,
+        timeout: CONFIG.network.userscriptTimeoutMs,
       },
       formatUserscriptImageResponse
     );

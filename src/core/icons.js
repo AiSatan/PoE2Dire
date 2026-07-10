@@ -93,7 +93,7 @@
         state.iconStatus = null;
         renderWikiStatusPill(document);
       }
-    }, 8000);
+    }, CONFIG.ui.statusErrorHideMs);
   }
 
   function collectIconJobs(groups) {

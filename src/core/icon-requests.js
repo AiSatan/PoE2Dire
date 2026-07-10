@@ -181,7 +181,7 @@
         url,
         headers: { Accept: "application/json", "Api-User-Agent": CONFIG.apiUserAgent },
         responseType: "text",
-        timeout: 30000,
+        timeout: CONFIG.network.userscriptTimeoutMs,
       },
       formatUserscriptJsonResponse
     );

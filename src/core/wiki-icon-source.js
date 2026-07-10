@@ -1,5 +1,4 @@
   const WIKI_PLACEHOLDER_IMAGE = /Questionmark|Help\.svg|Level_up_icon/i;
-  const ICON_THUMB_WIDTH = 108;
 
   async function queryWikiIconSource(endpoint, jobs, onResult) {
     const found = new Map();
@@ -47,7 +46,7 @@
     });
 
     const images = new Map();
-    for (const chunk of chunks(fileTitles, 40)) {
+    for (const chunk of chunks(fileTitles, CONFIG.wikiBatchSize)) {
       let json = null;
       try {
         json = await fetchImageInfo(endpoint, chunk);
@@ -123,7 +122,7 @@
       titles: fileTitles.join("|"),
       prop: "imageinfo",
       iiprop: "url",
-      iiurlwidth: String(ICON_THUMB_WIDTH),
+      iiurlwidth: String(CONFIG.iconThumbWidth),
     }));
   }
 
@@ -141,7 +140,7 @@
     });
 
     const existing = new Set();
-    for (const chunk of chunks(titles, 40)) {
+    for (const chunk of chunks(titles, CONFIG.wikiBatchSize)) {
       let json = null;
       try {
         json = await fetchJsonWithRetry(wikiApiUrl(endpoint, {

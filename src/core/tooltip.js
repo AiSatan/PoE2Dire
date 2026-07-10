@@ -1,7 +1,4 @@
   const TOOLTIP_ID = "PoE2Dire-tooltip";
-  const TOOLTIP_SHOW_DELAY = 500;
-  const KEYWORD_SHOW_DELAY = 220;
-  const TOOLTIP_HIDE_DELAY = 120;
 
   const tooltipState = {
     showTimer: 0,
@@ -95,14 +92,16 @@
   function scheduleTooltip(card) {
     window.clearTimeout(tooltipState.showTimer);
     window.clearTimeout(tooltipState.hideTimer);
-    const delay = card.classList.contains("pdp-keyword") ? KEYWORD_SHOW_DELAY : TOOLTIP_SHOW_DELAY;
+    const delay = card.classList.contains("pdp-keyword")
+      ? CONFIG.ui.keywordShowDelayMs
+      : CONFIG.ui.tooltipShowDelayMs;
     tooltipState.showTimer = window.setTimeout(() => showTooltip(card), delay);
   }
 
   function scheduleHide() {
     window.clearTimeout(tooltipState.showTimer);
     window.clearTimeout(tooltipState.hideTimer);
-    tooltipState.hideTimer = window.setTimeout(hideTooltip, TOOLTIP_HIDE_DELAY);
+    tooltipState.hideTimer = window.setTimeout(hideTooltip, CONFIG.ui.tooltipHideDelayMs);
   }
 
   function showTooltip(card) {
@@ -195,7 +194,7 @@
 
   function scheduleTooltipRetry(card, details) {
     const waitMs = details.retryInMs || 0;
-    if (!waitMs || waitMs > 120000) return;
+    if (!waitMs || waitMs > CONFIG.network.maxCooldownMs) return;
 
     window.setTimeout(() => {
       if (tooltipState.activeCard !== card) return;
