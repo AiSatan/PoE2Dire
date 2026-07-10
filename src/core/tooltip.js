@@ -11,6 +11,7 @@
   };
 
   if (supportsHover()) initEntityTooltips();
+  else initKeywordTapTooltips();
 
   function supportsHover() {
     return !window.matchMedia || window.matchMedia("(hover: hover) and (pointer: fine)").matches;
@@ -22,6 +23,29 @@
     document.addEventListener("focusin", onPointerOver, true);
     document.addEventListener("focusout", onPointerOut, true);
     window.addEventListener("scroll", hideTooltip, true);
+  }
+
+  function initKeywordTapTooltips() {
+    document.addEventListener("click", onKeywordTap, true);
+    window.addEventListener("scroll", hideTooltip, true);
+  }
+
+  function onKeywordTap(event) {
+    const root = document.getElementById("PoE2Dire-root");
+    if (!root) return;
+
+    const keyword = event.target?.closest?.(".pdp-keyword");
+    if (!keyword || !root.contains(keyword)) {
+      hideTooltip();
+      return;
+    }
+
+    if (tooltipState.activeCard === keyword && document.getElementById(TOOLTIP_ID)) {
+      hideTooltip();
+      return;
+    }
+
+    showTooltip(keyword);
   }
 
   function onPointerOver(event) {

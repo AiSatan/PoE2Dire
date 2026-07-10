@@ -125,13 +125,17 @@
 
   function resolveTocEntries(patch) {
     const entries = (patch.toc || [])
-      .map((entry) => ({ text: entry.text, target: tocTargetId(patch, entry.text) }))
+      .map((entry) => {
+        const target = tocTargetId(patch, entry.text);
+        return { text: entry.text, target, sub: target.startsWith("pdp-group-") };
+      })
       .filter((entry) => entry.target);
     if (entries.length) return entries;
 
     return patch.sections.map((section, index) => ({
       text: section.displayTitle,
       target: sectionAnchorId(index),
+      sub: false,
     }));
   }
 
@@ -169,7 +173,7 @@
 
   function renderTocList(doc, entries) {
     return el("ul", "pdp-toc-list", entries.map((entry) => {
-      const link = el("a", "pdp-toc-link", entry.text);
+      const link = el("a", entry.sub ? "pdp-toc-link pdp-toc-link-sub" : "pdp-toc-link", entry.text);
       link.href = `#${entry.target}`;
       link.dataset.pdpTarget = entry.target;
       link.addEventListener("click", (event) => {

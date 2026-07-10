@@ -331,7 +331,7 @@
 .pdp-tooltip {
   position: fixed;
   z-index: 2147483646;
-  max-width: 24rem;
+  max-width: min(24rem, calc(100vw - 1.5rem));
   max-height: calc(100vh - 1rem);
   overflow: hidden;
   color: #cdd6db;
@@ -340,7 +340,7 @@
 }
 
 .pdp-tooltip.pdp-tooltip-compact {
-  max-width: 27rem;
+  max-width: min(27rem, calc(100vw - 1.5rem));
 }
 
 .pdp-tooltip-compact .pdp-tooltip-body .item-box {
@@ -613,6 +613,12 @@
   border-left-color: #f1462e;
   color: #f4efe8;
   background: rgba(241, 70, 46, .14);
+}
+
+.pdp-toc-link-sub {
+  padding-left: 1.4rem;
+  color: #8f9ca3;
+  font-size: .92em;
 }
 
 .pdp-toc,
