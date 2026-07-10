@@ -68,6 +68,7 @@
   async function fetchJsonThroughQueue(url, priority) {
     await acquireWikiRequestSlot(priority);
     try {
+      throwIfWikiCoolingDown();
       return await fetchJsonResponse(url);
     } finally {
       releaseWikiRequestSlot();

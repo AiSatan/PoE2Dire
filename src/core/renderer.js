@@ -125,9 +125,10 @@
   }
 
   function resolveTocEntries(patch) {
+    const cursor = { section: 0, group: 0 };
     const entries = (patch.toc || [])
       .map((entry) => {
-        const target = tocTargetId(patch, entry.text);
+        const target = tocTargetId(patch, entry.text, cursor);
         return { text: entry.text, target, sub: target.startsWith("pdp-group-") };
       })
       .filter((entry) => entry.target);
@@ -140,7 +141,7 @@
     }));
   }
 
-  function tocTargetId(patch, text) {
+  function tocTargetId(patch, text, cursor) {
     const key = normalKey(text);
     if (!key) return "";
     if (normalKey(patch.title) === key) return "top";
@@ -148,18 +149,29 @@
     for (let index = 0; index < patch.sections.length; index += 1) {
       const section = patch.sections[index];
       if (normalKey(section.title) === key || normalKey(section.displayTitle) === key) {
+        cursor.section = index;
+        cursor.group = 0;
         return sectionAnchorId(index);
       }
     }
 
-    for (let index = 0; index < patch.sections.length; index += 1) {
+    const match = findGroupByKey(patch, key, cursor) || findGroupByKey(patch, key, { section: 0, group: 0 });
+    if (!match) return "";
+
+    cursor.section = match.section;
+    cursor.group = match.group + 1;
+    return groupAnchorId(match.section, match.group);
+  }
+
+  function findGroupByKey(patch, key, from) {
+    for (let index = from.section; index < patch.sections.length; index += 1) {
       const groups = patch.sections[index].groups;
-      for (let groupIndex = 0; groupIndex < groups.length; groupIndex += 1) {
-        if (normalKey(groups[groupIndex].title) === key) return groupAnchorId(index, groupIndex);
+      const start = index === from.section ? from.group : 0;
+      for (let groupIndex = start; groupIndex < groups.length; groupIndex += 1) {
+        if (normalKey(groups[groupIndex].title) === key) return { section: index, group: groupIndex };
       }
     }
-
-    return "";
+    return null;
   }
 
   function renderToc(doc, entries) {

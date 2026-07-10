@@ -29,7 +29,7 @@
     for (let index = 0; index < tokens.length; index += 1) {
       const token = tokens[index];
       if (token.type === "toc") {
-        patch.toc.push(...(token.entries || []));
+        if (!currentSection) patch.toc.push(...(token.entries || []));
         continue;
       }
       if (token === titleToken || token.type === "image") continue;
