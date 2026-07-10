@@ -8,8 +8,6 @@ Extension for rendering Path of Exile patch notes in a Dota2-style layout (Engli
 
 [Reddit thread](https://www.reddit.com/r/PathOfExile2/comments/1toxfei/dota2_style_patch_notes_browser_extension/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button) of the extension in Path of Exile 2 sub.
 
-It's not perfect, but neither am I.
-
 <img width="1280" height="800" alt="01-overview" src="https://github.com/user-attachments/assets/4efc326c-270c-4a18-b46b-d3ca8be557a6" />
 <img width="1201" height="1021" alt="showcase" src="https://github.com/user-attachments/assets/c41b4e58-084c-4a46-969e-76e239129df7" />
 
@@ -20,7 +18,7 @@ The extension only injects on:
 https://www.pathofexile.com/forum/*
 ```
 
-It still declares access to `poewiki.net` and `poe2wiki.net` for icon lookup.
+It still declares access to `poewiki.net` and `poe2wiki.net` for info lookup and assets.
 
 
 ## How to use?
@@ -34,16 +32,12 @@ It still declares access to `poewiki.net` and `poe2wiki.net` for icon lookup.
 Video example: [https://www.youtube.com/watch?v=ES66rQrVNQY](https://www.youtube.com/watch?v=ES66rQrVNQY)
 
 
-## Dota2 Style Search Feature
+## Features
 
-> [!NOTE]
-> This works only if you installed via Chrome/Firefox extension
-
-The second feature of this extension is the ability to search by just starting to type. 
-- Yes, just start typing, for example, type `traps`, until you realize `There is no Carol in H.R`. 
-- You can press `Enter` to move to the next result. 
-- It clears automatically after 2 seconds, so you can easily start searching for a new thing next, so try to search for `daggers` next.
-
+- Start typeing to activate search feature, just start typing on your keyword, nothing else.
+- Custom table of content - pretty and easy to use!
+- Item/skills description on hover - don't remember what that unique does? Hover and see wiki description!
+- Keyword description on hover - Are you new and only 5000 hours in the game? Don't worry, hover over unknown words, like "aggregated" and see full description what it means! (based on poewiki keywords page - so PoE only, PoE2 playes pls don't get too confused for now)
 
 ## Install options
 
@@ -66,7 +60,7 @@ The second feature of this extension is the ability to search by just starting t
 
 I hope you already know how to install script for your monkey, you can download the `PoE2Dire.user.js` script from [GitHub Releases](https://github.com/aisatan/PoE2Dire/releases) page. Here's a video example for ViolentMonkey: [https://www.youtube.com/watch?v=cgWVGSAxoEY](https://www.youtube.com/watch?v=cgWVGSAxoEY)
 
-> Rumor has it: "You can hyperlink to the raw .js which leads directly to install page so no need for DL etc. Install the https://github.com/AiSatan/PoE2Dire/releases/download/v1.0.1/PoE2Dire.user.js"
+> Rumor has it: "You can hyperlink to the raw .js directly in the install page.
 
 In short, it goes like this:
 
