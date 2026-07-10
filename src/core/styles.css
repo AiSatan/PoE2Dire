@@ -558,3 +558,13 @@
   border-color: rgba(219, 80, 54, .78);
   color: #f0b9ad;
 }
+
+.pdp-changes a {
+  color: #7fb8e6;
+  text-decoration: underline;
+  text-underline-offset: .14em;
+}
+
+.pdp-changes a:hover {
+  color: #a8d4f5;
+}

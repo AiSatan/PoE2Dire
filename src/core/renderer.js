@@ -132,7 +132,7 @@
   function renderGeneralList(doc, group) {
     return el("div", "pdp-general-list", [
       el("h3", "pdp-subsection-title", "General Changes"),
-      el("ul", "pdp-changes", group.items.map((item) => el("li", "", highlightChange(doc, item)))),
+      el("ul", "pdp-changes", group.items.map((item) => el("li", "", renderChangeItem(doc, item)))),
     ]);
   }
 
@@ -145,7 +145,7 @@
         children.push(renderUpdateBlock(doc, block));
       });
     } else {
-      children.push(el("ul", "pdp-changes", group.items.map((item) => el("li", "", highlightChange(doc, item)))));
+      children.push(el("ul", "pdp-changes", group.items.map((item) => el("li", "", renderChangeItem(doc, item)))));
     }
     return el("div", "pdp-subsection", children);
   }
@@ -153,7 +153,7 @@
   function renderUpdateBlock(doc, block) {
     return el("div", "pdp-update-block", [
       el("div", "pdp-list-label", block.label),
-      el("ul", "pdp-changes pdp-update-changes", block.items.map((item) => el("li", "", highlightChange(doc, item)))),
+      el("ul", "pdp-changes pdp-update-changes", block.items.map((item) => el("li", "", renderChangeItem(doc, item)))),
     ]);
   }
 
@@ -161,7 +161,7 @@
     const icon = renderIcon(group);
     const meta = el("div", "pdp-group-meta", groupLabel(group));
     const title = el("div", "pdp-group-title", group.title);
-    const items = el("ul", "pdp-changes", group.items.map((item) => el("li", "", highlightChange(doc, item))));
+    const items = el("ul", "pdp-changes", group.items.map((item) => el("li", "", renderChangeItem(doc, item))));
     const article = el("article", "pdp-group", [icon, el("div", "pdp-group-body", [title, meta, items])]);
     article.tabIndex = 0;
     article.dataset.pdpIconKey = iconDomKey(group);
@@ -263,7 +263,7 @@
   }
 
   function passiveLabel(group) {
-    const text = `${group.title} ${group.items.join(" ")}`;
+    const text = `${group.title} ${group.items.map(changeText).join(" ")}`;
     if (/\bkeystone\b/i.test(text)) return "KEYSTONE";
     if (/\bnotable\b/i.test(text)) return "NOTABLE";
     return "PASSIVE";
@@ -539,6 +539,47 @@
   function setIconStateClass(box, nextClass) {
     box.classList.remove("pdp-icon-pending", "pdp-icon-resolved", "pdp-icon-missing", "pdp-icon-default");
     box.classList.add(nextClass);
+  }
+
+  function changeText(item) {
+    return typeof item === "string" ? item : item?.text || "";
+  }
+
+  function renderChangeItem(doc, item) {
+    const text = changeText(item);
+    const links = typeof item === "string" ? [] : item?.links || [];
+    const fragment = doc.createDocumentFragment();
+
+    splitByLinks(text, links).forEach((segment) => {
+      if (segment.href) {
+        const anchor = el("a", "", highlightChange(doc, segment.text));
+        anchor.href = segment.href;
+        anchor.target = "_blank";
+        anchor.rel = "noopener noreferrer";
+        fragment.append(anchor);
+      } else {
+        fragment.append(highlightChange(doc, segment.text));
+      }
+    });
+
+    return fragment;
+  }
+
+  function splitByLinks(text, links) {
+    const segments = [];
+    let cursor = 0;
+
+    (links || []).forEach((link) => {
+      if (!link?.text || !link.href || link.text.length < 2) return;
+      const index = text.indexOf(link.text, cursor);
+      if (index < 0) return;
+      if (index > cursor) segments.push({ text: text.slice(cursor, index) });
+      segments.push({ text: link.text, href: link.href });
+      cursor = index + link.text.length;
+    });
+
+    if (cursor < text.length || !segments.length) segments.push({ text: text.slice(cursor) });
+    return segments;
   }
 
   function highlightChange(doc, text) {
