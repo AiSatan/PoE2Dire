@@ -260,6 +260,7 @@
 
   function fitTooltip(tip) {
     tip.classList.remove("pdp-tooltip-compact");
+    if (!tip.querySelector(".pdp-tooltip-body")) return;
     const limit = window.innerHeight - 24;
     if (tip.offsetHeight > limit) tip.classList.add("pdp-tooltip-compact");
   }

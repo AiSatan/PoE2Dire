@@ -18,11 +18,7 @@
     state.wikiDone = false;
     state.wikiEndpoints = apiEndpointsForPatch(patch);
     renderPatchPage(document, root, patch);
-
-    if (!state.cacheCleaned) {
-      state.cacheCleaned = true;
-      cleanupStaleCacheEntries();
-    }
+    cleanupStaleCacheEntries();
 
     const renderResolvedPatchNow = (resolvedPatch) => {
       if (runId !== state.renderRunId) return false;

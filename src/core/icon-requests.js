@@ -39,7 +39,6 @@
     if (remaining <= 0) return;
 
     const error = new Error("Wiki requests paused after rate limiting");
-    error.coolingDown = true;
     error.retryInMs = remaining;
     if (state.wikiCooldownReason === "challenge") error.challenged = true;
     else error.rateLimited = true;
@@ -51,7 +50,6 @@
     if (until <= (state.wikiCooldownUntil || 0)) return;
     state.wikiCooldownUntil = until;
     state.wikiCooldownReason = reason;
-    console.warn(`[PoE2Dire] Wiki rate limited (${reason}), pausing requests for ${Math.ceil((until - Date.now()) / 1000)}s`);
   }
 
   function wikiRequestError(response) {

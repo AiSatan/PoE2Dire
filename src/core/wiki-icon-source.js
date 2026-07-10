@@ -36,7 +36,7 @@
     const fileTitles = [];
     const seenTitles = new Set();
     lookups.forEach((lookup) => {
-      const key = normalFileTitle(lookup.fileTitle);
+      const key = normalWikiTitle(lookup.fileTitle);
       const candidates = candidatesByJob.get(lookup.job) || [];
       candidates.push(key);
       candidatesByJob.set(lookup.job, candidates);
@@ -58,7 +58,7 @@
       Object.values(json.query?.pages || {}).forEach((page) => {
         const imageUrl = page.imageinfo?.[0]?.thumburl || page.imageinfo?.[0]?.url;
         if (!imageUrl) return;
-        images.set(normalFileTitle(page.title), {
+        images.set(normalWikiTitle(page.title), {
           url: imageUrl,
           source: `${endpoint.name} File`,
         });
@@ -83,7 +83,7 @@
       .forEach((job) => {
         iconLookupCandidateTitles(job.title, job.kind).forEach((title) => {
           predictableFileIconTitles(title, job.kind).forEach((fileTitle) => {
-            const key = `${job.key}:${normalFileTitle(fileTitle)}`;
+            const key = `${job.key}:${normalWikiTitle(fileTitle)}`;
             if (seen.has(key)) return;
             seen.add(key);
             lookups.push({ job, fileTitle });
@@ -133,7 +133,7 @@
     jobs.forEach((job) => {
       iconLookupCandidateTitles(job.title, job.kind).forEach((title) => {
         if (title.includes("|")) return;
-        const key = normalPageTitle(title);
+        const key = normalWikiTitle(title);
         if (seen.has(key)) return;
         seen.add(key);
         titles.push(title);
@@ -167,18 +167,14 @@
         for (let hop = 0; hop < 3 && renames.has(target); hop += 1) {
           target = renames.get(target);
         }
-        if (existingPages.has(target)) existing.add(normalPageTitle(title));
+        if (existingPages.has(target)) existing.add(normalWikiTitle(title));
       });
     }
 
     return existing;
   }
 
-  function normalPageTitle(title) {
-    return cleanTitle(title).replace(/_/g, " ").toLowerCase();
-  }
-
-  function normalFileTitle(title) {
+  function normalWikiTitle(title) {
     return cleanTitle(title).replace(/_/g, " ").toLowerCase();
   }
 
@@ -194,7 +190,7 @@
     let lastError = null;
 
     for (const title of iconLookupCandidateTitles(job.title, job.kind)) {
-      const pageExists = !existingTitles || existingTitles.has(normalPageTitle(title));
+      const pageExists = !existingTitles || existingTitles.has(normalWikiTitle(title));
       try {
         const image = await queryWikiPageImage(endpoint, title, job.kind, pageExists);
         if (image) return image;

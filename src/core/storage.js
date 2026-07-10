@@ -76,7 +76,12 @@
     };
   }
 
+  let staleCacheCleaned = false;
+
   async function cleanupStaleCacheEntries() {
+    if (staleCacheCleaned) return;
+    staleCacheCleaned = true;
+
     try {
       const api = extensionApi();
       if (api?.storage?.local) {

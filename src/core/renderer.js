@@ -10,7 +10,8 @@
   function renderPatchPage(doc, sourceRoot, patch) {
     doc.getElementById("PoE2Dire-root")?.remove();
 
-    const toc = renderToc(doc, patch);
+    const tocEntries = resolveTocEntries(patch);
+    const toc = renderToc(doc, tocEntries);
     const shell = el("div", "pdp-shell", [
       toc,
       el("div", "pdp-sections", patch.sections.map((section, index) => renderSection(doc, section, index))),
@@ -19,7 +20,7 @@
 
     const page = el("main", "pdp-page", [
       renderHero(patch),
-      renderTocBar(doc, patch),
+      renderTocBar(doc, patch, tocEntries),
       shell,
     ]);
 
@@ -161,8 +162,7 @@
     return "";
   }
 
-  function renderToc(doc, patch) {
-    const entries = resolveTocEntries(patch);
+  function renderToc(doc, entries) {
     if (entries.length < 2) return null;
 
     return el("aside", "pdp-toc", [
@@ -193,8 +193,7 @@
     doc.getElementById(target)?.scrollIntoView({ block: "start" });
   }
 
-  function renderTocBar(doc, patch) {
-    const entries = resolveTocEntries(patch);
+  function renderTocBar(doc, patch, entries) {
     if (entries.length < 2) return null;
 
     const button = el("button", "pdp-toc-bar-button", "Sections");
@@ -497,24 +496,24 @@
     throw lastError || new Error("Image proxy failed");
   }
 
-  async function renderableIconUrl(url, priority) {
+  async function renderableIconUrl(url) {
     if (!isWikiImageUrl(url)) return url;
 
     const api = extensionApi();
     if (!api?.runtime?.id || !api.runtime.sendMessage) {
       const userscriptRequest = userscriptXmlHttpRequest();
       if (!userscriptRequest) return url;
-      return cachedWikiImageProxy(userscriptRequest, url, fetchWikiImageViaUserscript, priority);
+      return cachedWikiImageProxy(userscriptRequest, url, fetchWikiImageViaUserscript);
     }
 
-    return cachedWikiImageProxy(api, url, fetchWikiImageViaExtension, priority);
+    return cachedWikiImageProxy(api, url, fetchWikiImageViaExtension);
   }
 
-  function cachedWikiImageProxy(proxy, url, fetchImage, priority) {
+  function cachedWikiImageProxy(proxy, url, fetchImage) {
     const cached = iconImageCache.get(url);
     if (cached) return cached;
 
-    const request = queueWikiImageProxy(proxy, url, fetchImage, priority).catch((error) => {
+    const request = queueWikiImageProxy(proxy, url, fetchImage).catch((error) => {
       iconImageCache.delete(url);
       throw error;
     });
@@ -522,11 +521,9 @@
     return request;
   }
 
-  function queueWikiImageProxy(proxy, url, fetchImage, priority) {
+  function queueWikiImageProxy(proxy, url, fetchImage) {
     return new Promise((resolve, reject) => {
-      const job = { proxy, url, fetchImage, resolve, reject };
-      if (priority) iconImageQueue.unshift(job);
-      else iconImageQueue.push(job);
+      iconImageQueue.push({ proxy, url, fetchImage, resolve, reject });
       drainIconImageQueue();
     });
   }

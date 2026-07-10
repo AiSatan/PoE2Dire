@@ -7,6 +7,7 @@
 
     if (!jobs.length) {
       state.wikiDone = true;
+      renderWikiStatusPill(document);
       return patch;
     }
 

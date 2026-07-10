@@ -33,7 +33,6 @@
     wikiEndpoints: null,
     iconStatus: null,
     retryWaitMs: 0,
-    cacheCleaned: false,
     wikiCooldownUntil: 0,
     wikiCooldownReason: "",
   };

@@ -64,13 +64,11 @@
     }
 
     if (!result && failure) {
-      if (!failure.coolingDown) console.warn("[PoE2Dire] Wiki details lookup failed:", title, failure);
       return {
         status: "error",
         challenged: Boolean(failure.challenged),
         rateLimited: Boolean(failure.rateLimited),
         retryInMs: failure.retryInMs || 0,
-        message: failure.message || "",
       };
     }
 
