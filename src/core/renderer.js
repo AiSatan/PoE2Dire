@@ -5,9 +5,17 @@
   function renderPatchPage(doc, sourceRoot, patch) {
     doc.getElementById("PoE2Dire-root")?.remove();
 
+    const toc = renderToc(doc, patch);
+    const shell = el("div", "pdp-shell", [
+      toc,
+      el("div", "pdp-sections", patch.sections.map((section, index) => renderSection(doc, section, index))),
+    ]);
+    if (toc) shell.classList.add("pdp-has-toc");
+
     const page = el("main", "pdp-page", [
       renderHero(patch),
-      el("div", "pdp-shell", patch.sections.map((section) => renderSection(doc, section))),
+      renderTocBar(doc, patch),
+      shell,
     ]);
 
     const mount = doc.createElement("div");
@@ -97,12 +105,70 @@
     ]);
   }
 
-  function renderSection(doc, section) {
+  function renderSection(doc, section, index) {
     const groups = orderedSectionGroups(section);
-    return el("section", "pdp-section", [
+    const node = el("section", "pdp-section", [
       el("h2", "pdp-section-title", section.displayTitle),
       el("div", "pdp-section-body", groups.map((group) => renderGroup(doc, section, group))),
     ]);
+    node.id = sectionAnchorId(index);
+    return node;
+  }
+
+  function sectionAnchorId(index) {
+    return `pdp-section-${index}`;
+  }
+
+  function renderToc(doc, patch) {
+    if (patch.sections.length < 2) return null;
+
+    return el("aside", "pdp-toc", [
+      el("div", "pdp-toc-title", "Contents"),
+      renderTocList(doc, patch),
+    ]);
+  }
+
+  function renderTocList(doc, patch) {
+    return el("ul", "pdp-toc-list", patch.sections.map((section, index) => {
+      const link = el("a", "pdp-toc-link", section.displayTitle);
+      link.href = `#${sectionAnchorId(index)}`;
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        closeTocDrawer(doc);
+        doc.getElementById(sectionAnchorId(index))?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+      return el("li", "", link);
+    }));
+  }
+
+  function renderTocBar(doc, patch) {
+    if (patch.sections.length < 2) return null;
+
+    const button = el("button", "pdp-toc-bar-button", "Sections");
+    button.type = "button";
+    button.setAttribute("aria-expanded", "false");
+
+    const bar = el("div", "pdp-toc-mobile", [
+      el("div", "pdp-toc-bar", [
+        el("div", "pdp-toc-bar-title", patch.version || patch.title),
+        button,
+      ]),
+      el("div", "pdp-toc-drawer", renderTocList(doc, patch)),
+    ]);
+
+    button.addEventListener("click", () => {
+      const open = bar.classList.toggle("pdp-toc-open");
+      button.setAttribute("aria-expanded", String(open));
+    });
+
+    return bar;
+  }
+
+  function closeTocDrawer(doc) {
+    const bar = doc.querySelector(".pdp-toc-mobile.pdp-toc-open");
+    if (!bar) return;
+    bar.classList.remove("pdp-toc-open");
+    bar.querySelector(".pdp-toc-bar-button")?.setAttribute("aria-expanded", "false");
   }
 
   function orderedSectionGroups(section) {

@@ -49,6 +49,10 @@
         return;
       }
 
+      if (node.matches("ul,ol") && isTocList(node)) {
+        return;
+      }
+
       if (node.matches("h1,h2,h3,h4,h5")) {
         pushToken("heading", textOf(node), node);
         return;
@@ -98,6 +102,16 @@
           links: href ? [{ text: line, href }] : [],
         }));
     }
+  }
+
+  function isTocList(node) {
+    const anchors = Array.from(node.querySelectorAll("a[href]"));
+    if (!anchors.length) return false;
+    if (!anchors.every((anchor) => (anchor.getAttribute("href") || "").includes("#"))) return false;
+
+    const listText = cleanText(node.textContent).replace(/\s+/g, " ");
+    const linkText = anchors.map((anchor) => cleanText(anchor.textContent)).join(" ").replace(/\s+/g, " ");
+    return listText === linkText;
   }
 
   function linksOf(element) {
