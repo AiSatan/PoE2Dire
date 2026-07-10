@@ -718,7 +718,7 @@
 
     splitByLinks(text, links).forEach((segment) => {
       if (segment.href) {
-        const anchor = el("a", "", highlightChange(doc, segment.text));
+        const anchor = el("a", "", highlightNumbers(doc, segment.text));
         anchor.href = segment.href;
         anchor.target = "_blank";
         anchor.rel = "noopener noreferrer";
@@ -749,6 +749,20 @@
   }
 
   function highlightChange(doc, text) {
+    const fragment = doc.createDocumentFragment();
+    splitByKeywords(text).forEach((part) => {
+      if (part.keyword) {
+        const span = el("span", "pdp-keyword", highlightNumbers(doc, part.text));
+        span.dataset.pdpKeyword = part.keyword;
+        fragment.append(span);
+      } else {
+        fragment.append(highlightNumbers(doc, part.text));
+      }
+    });
+    return fragment;
+  }
+
+  function highlightNumbers(doc, text) {
     const fragment = doc.createDocumentFragment();
     const regex = /[+-]?\d+(?:\.\d+)?(?:-[+-]?\d+(?:\.\d+)?)?%?/g;
     let lastIndex = 0;

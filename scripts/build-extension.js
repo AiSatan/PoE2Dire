@@ -27,6 +27,8 @@ const CORE_FRAGMENTS = [
   "storage.js",
   "icon-store.js",
   "details-store.js",
+  "keywords-data.js",
+  "keywords.js",
   "icon-requests.js",
   "icon-names.js",
   "wiki-icon-source.js",

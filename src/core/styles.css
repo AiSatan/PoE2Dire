@@ -542,6 +542,40 @@
   color: #a8d4f5;
 }
 
+.pdp-keyword {
+  cursor: help;
+  text-decoration: underline dotted rgba(174, 193, 202, .55);
+  text-decoration-thickness: 1px;
+  text-underline-offset: .16em;
+}
+
+.pdp-keyword:hover {
+  color: #f4efe8;
+  text-decoration-color: #f1462e;
+}
+
+.pdp-tooltip-keyword {
+  max-width: 22rem;
+  padding: .55rem .7rem;
+  border: 1px solid rgba(154, 163, 172, .55);
+  border-radius: .25rem;
+  background: rgba(10, 12, 14, .98);
+  box-shadow: 0 .6rem 1.6rem rgba(0, 0, 0, .6);
+}
+
+.pdp-tooltip-keyword-term {
+  margin-bottom: .25rem;
+  color: #f4efe8;
+  font-size: .74rem;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.pdp-tooltip-keyword-text {
+  color: #cdd6db;
+}
+
 .pdp-toc {
   display: none;
 }

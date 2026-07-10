@@ -1,5 +1,6 @@
   const TOOLTIP_ID = "PoE2Dire-tooltip";
   const TOOLTIP_SHOW_DELAY = 500;
+  const KEYWORD_SHOW_DELAY = 220;
   const TOOLTIP_HIDE_DELAY = 120;
 
   const tooltipState = {
@@ -24,13 +25,23 @@
   }
 
   function onPointerOver(event) {
-    const card = tooltipCardFrom(event.target, event.type === "mouseover");
+    const viaMouse = event.type === "mouseover";
+    const card = tooltipCardFrom(event.target, viaMouse);
     if (!card) return;
+    if (!viaMouse && !isKeyboardFocus(card)) return;
     if (card === tooltipState.activeCard) {
       window.clearTimeout(tooltipState.hideTimer);
       return;
     }
     scheduleTooltip(card);
+  }
+
+  function isKeyboardFocus(element) {
+    try {
+      return element.matches(":focus-visible");
+    } catch (error) {
+      return true;
+    }
   }
 
   function onPointerOut(event) {
@@ -47,6 +58,9 @@
     const root = document.getElementById("PoE2Dire-root");
     if (!root) return null;
 
+    const keyword = target.closest(".pdp-keyword");
+    if (keyword && root.contains(keyword)) return keyword;
+
     const scope = viaMouse ? target.closest(".pdp-icon") : target;
     if (!scope) return null;
 
@@ -57,7 +71,8 @@
   function scheduleTooltip(card) {
     window.clearTimeout(tooltipState.showTimer);
     window.clearTimeout(tooltipState.hideTimer);
-    tooltipState.showTimer = window.setTimeout(() => showTooltip(card), TOOLTIP_SHOW_DELAY);
+    const delay = card.classList.contains("pdp-keyword") ? KEYWORD_SHOW_DELAY : TOOLTIP_SHOW_DELAY;
+    tooltipState.showTimer = window.setTimeout(() => showTooltip(card), delay);
   }
 
   function scheduleHide() {
@@ -69,6 +84,15 @@
   function showTooltip(card) {
     const root = document.getElementById("PoE2Dire-root");
     if (!root || !root.contains(card)) return;
+
+    if (card.classList.contains("pdp-keyword")) {
+      tooltipState.activeCard = card;
+      tooltipState.token += 1;
+      const keywordTip = ensureTooltip(root);
+      renderKeywordTooltip(keywordTip, card.dataset.pdpKeyword || "");
+      positionTooltip(keywordTip, card);
+      return;
+    }
 
     tooltipState.activeCard = card;
     const token = ++tooltipState.token;
@@ -126,6 +150,19 @@
 
   function renderTooltipEmpty(tip) {
     tip.replaceChildren(el("div", "pdp-tooltip-empty", "No wiki details for this entry."));
+  }
+
+  function renderKeywordTooltip(tip, term) {
+    const description = keywordDescription(term);
+    if (!description) {
+      renderTooltipEmpty(tip);
+      return;
+    }
+
+    tip.replaceChildren(el("div", "pdp-tooltip-keyword", [
+      el("div", "pdp-tooltip-keyword-term", term),
+      el("div", "pdp-tooltip-keyword-text", description),
+    ]));
   }
 
   function renderTooltipError(tip, details) {
