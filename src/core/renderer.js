@@ -199,8 +199,8 @@
 
     const bar = el("div", "pdp-toc-mobile pdp-toc-open", [
       el("div", "pdp-toc-bar", [
-        button,
         el("div", "pdp-toc-bar-title", patch.version || patch.title),
+        button,
       ]),
       el("div", "pdp-toc-drawer", renderTocList(doc, entries)),
     ]);
