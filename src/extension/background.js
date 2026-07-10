@@ -7,7 +7,7 @@
     if (!tab?.id) return;
 
     try {
-      await sendMessage(tab.id, { type: "poe2dire:toggle" });
+      await api.tabs.sendMessage(tab.id, { type: "poe2dire:toggle" });
     } catch (error) {
       // poe forum only, the rest ignore
     }
@@ -58,7 +58,10 @@
       };
     }
 
-    const response = await fetch(url, { credentials: "include" });
+    const response = await fetch(url, {
+      credentials: "include",
+      headers: { "Api-User-Agent": "PoE2Dire (https://github.com/aisatan/PoE2Dire)" },
+    });
     const contentType = response.headers.get("Content-Type") || "";
     const cfMitigated = response.headers.get("cf-mitigated") || "";
     const retryAfter = response.headers.get("Retry-After") || "";
@@ -168,22 +171,9 @@
 
   function base64Encode(bytes) {
     let binary = "";
-    for (const byte of bytes) {
-      binary += String.fromCharCode(byte);
+    for (let index = 0; index < bytes.length; index += 0x8000) {
+      binary += String.fromCharCode(...bytes.subarray(index, index + 0x8000));
     }
     return btoa(binary);
-  }
-
-  function sendMessage(tabId, message) {
-    if (typeof browser !== "undefined" && api === browser) {
-      return api.tabs.sendMessage(tabId, message);
-    }
-    return new Promise((resolve, reject) => {
-      api.tabs.sendMessage(tabId, message, (response) => {
-        const error = api.runtime.lastError;
-        if (error) reject(error);
-        else resolve(response);
-      });
-    });
   }
 })();

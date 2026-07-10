@@ -8,9 +8,11 @@
     await queryPredictableFileIcons(endpoint, jobs, found, onResult);
 
     const remainingJobs = jobs.filter((job) => !found.has(job.key));
+    const existingTitles = await queryExistingTitles(endpoint, remainingJobs);
+
     await mapWithConcurrency(remainingJobs, CONFIG.wikiLookupConcurrency, async (job) => {
       try {
-        const image = await queryWikiIcon(endpoint, job);
+        const image = await queryWikiIcon(endpoint, job, existingTitles);
         if (image) {
           found.set(job.key, image);
           if (onResult) onResult(job, image, false);
@@ -30,40 +32,46 @@
     const lookups = predictableFileIconLookups(jobs);
     if (!lookups.length) return;
 
-    const byFile = new Map();
+    const candidatesByJob = new Map();
     const fileTitles = [];
+    const seenTitles = new Set();
     lookups.forEach((lookup) => {
       const key = normalFileTitle(lookup.fileTitle);
-      const existing = byFile.get(key) || [];
-      existing.push(lookup.job);
-      if (!byFile.has(key)) fileTitles.push(lookup.fileTitle);
-      byFile.set(key, existing);
+      const candidates = candidatesByJob.get(lookup.job) || [];
+      candidates.push(key);
+      candidatesByJob.set(lookup.job, candidates);
+      if (!seenTitles.has(key)) {
+        seenTitles.add(key);
+        fileTitles.push(lookup.fileTitle);
+      }
     });
 
+    const images = new Map();
     for (const chunk of chunks(fileTitles, 40)) {
       let json = null;
       try {
         json = await fetchImageInfo(endpoint, chunk);
       } catch (error) {
-        return;
+        break;
       }
 
       Object.values(json.query?.pages || {}).forEach((page) => {
         const imageUrl = page.imageinfo?.[0]?.thumburl || page.imageinfo?.[0]?.url;
         if (!imageUrl) return;
-
-        const image = {
+        images.set(normalFileTitle(page.title), {
           url: imageUrl,
           source: `${endpoint.name} File`,
-        };
-        const matchedJobs = byFile.get(normalFileTitle(page.title)) || [];
-        matchedJobs.forEach((job) => {
-          if (found.has(job.key)) return;
-          found.set(job.key, image);
-          if (onResult) onResult(job, image, false);
         });
       });
     }
+
+    candidatesByJob.forEach((candidates, job) => {
+      if (found.has(job.key)) return;
+      const image = candidates.map((key) => images.get(key)).find(Boolean);
+      if (!image) return;
+      found.set(job.key, image);
+      if (onResult) onResult(job, image, false);
+    });
   }
 
   function predictableFileIconLookups(jobs) {
@@ -88,7 +96,7 @@
 
   function predictableFileIconTitles(title, kind) {
     if (kind === "support") return supportInventoryIconFileTitles(title);
-    if (kind === "skill") return [skillIconFileTitle(title), inventoryIconFileTitle(title)];
+    if (kind === "skill") return [inventoryIconFileTitle(title), skillIconFileTitle(title)];
     return [inventoryIconFileTitle(title)];
   }
 
@@ -110,16 +118,64 @@
   }
 
   async function fetchImageInfo(endpoint, fileTitles) {
-    const url = new URL(endpoint.api);
-    url.searchParams.set("origin", "*");
-    url.searchParams.set("format", "json");
-    url.searchParams.set("action", "query");
-    url.searchParams.set("titles", fileTitles.join("|"));
-    url.searchParams.set("prop", "imageinfo");
-    url.searchParams.set("iiprop", "url");
-    url.searchParams.set("iiurlwidth", String(ICON_THUMB_WIDTH));
+    return fetchJsonWithRetry(wikiApiUrl(endpoint, {
+      action: "query",
+      titles: fileTitles.join("|"),
+      prop: "imageinfo",
+      iiprop: "url",
+      iiurlwidth: String(ICON_THUMB_WIDTH),
+    }));
+  }
 
-    return fetchJsonWithRetry(url.toString());
+  async function queryExistingTitles(endpoint, jobs) {
+    const titles = [];
+    const seen = new Set();
+    jobs.forEach((job) => {
+      iconLookupCandidateTitles(job.title, job.kind).forEach((title) => {
+        if (title.includes("|")) return;
+        const key = normalPageTitle(title);
+        if (seen.has(key)) return;
+        seen.add(key);
+        titles.push(title);
+      });
+    });
+
+    const existing = new Set();
+    for (const chunk of chunks(titles, 40)) {
+      let json = null;
+      try {
+        json = await fetchJsonWithRetry(wikiApiUrl(endpoint, {
+          action: "query",
+          redirects: "1",
+          titles: chunk.join("|"),
+        }));
+      } catch (error) {
+        return null;
+      }
+
+      const renames = new Map();
+      (json.query?.normalized || []).forEach((entry) => renames.set(entry.from, entry.to));
+      (json.query?.redirects || []).forEach((entry) => renames.set(entry.from, entry.to));
+
+      const existingPages = new Set();
+      Object.values(json.query?.pages || {}).forEach((page) => {
+        if (page.missing === undefined && page.pageid) existingPages.add(page.title);
+      });
+
+      chunk.forEach((title) => {
+        let target = title;
+        for (let hop = 0; hop < 3 && renames.has(target); hop += 1) {
+          target = renames.get(target);
+        }
+        if (existingPages.has(target)) existing.add(normalPageTitle(title));
+      });
+    }
+
+    return existing;
+  }
+
+  function normalPageTitle(title) {
+    return cleanTitle(title).replace(/_/g, " ").toLowerCase();
   }
 
   function normalFileTitle(title) {
@@ -134,12 +190,13 @@
     return result;
   }
 
-  async function queryWikiIcon(endpoint, job) {
+  async function queryWikiIcon(endpoint, job, existingTitles) {
     let lastError = null;
 
     for (const title of iconLookupCandidateTitles(job.title, job.kind)) {
+      const pageExists = !existingTitles || existingTitles.has(normalPageTitle(title));
       try {
-        const image = await queryWikiPageImage(endpoint, title, job.kind);
+        const image = await queryWikiPageImage(endpoint, title, job.kind, pageExists);
         if (image) return image;
       } catch (error) {
         lastError = error;
@@ -150,21 +207,20 @@
     return null;
   }
 
-  async function queryWikiPageImage(endpoint, title, kind) {
+  async function queryWikiPageImage(endpoint, title, kind, pageExists) {
     if (kind === "passive" || (kind === "ascendancy" && !validAscendancyClassTitle(title))) {
       const passiveIcon = await queryWikiPassiveIcon(endpoint, title);
       if (passiveIcon) return passiveIcon;
     }
 
-    const url = new URL(endpoint.api);
-    url.searchParams.set("origin", "*");
-    url.searchParams.set("format", "json");
-    url.searchParams.set("action", "parse");
-    url.searchParams.set("redirects", "1");
-    url.searchParams.set("prop", "text");
-    url.searchParams.set("page", title);
+    if (!pageExists) return null;
 
-    const json = await fetchJsonWithRetry(url.toString());
+    const json = await fetchJsonWithRetry(wikiApiUrl(endpoint, {
+      action: "parse",
+      redirects: "1",
+      prop: "text",
+      page: title,
+    }));
     const html = json.parse?.text?.["*"];
     if (!html) return null;
 
@@ -183,15 +239,12 @@
     const iconFile = await queryWikiPassiveIconFile(endpoint, title);
     if (!iconFile) return null;
 
-    const url = new URL(endpoint.api);
-    url.searchParams.set("origin", "*");
-    url.searchParams.set("format", "json");
-    url.searchParams.set("action", "query");
-    url.searchParams.set("titles", iconFile);
-    url.searchParams.set("prop", "imageinfo");
-    url.searchParams.set("iiprop", "url");
-
-    const json = await fetchJsonWithRetry(url.toString());
+    const json = await fetchJsonWithRetry(wikiApiUrl(endpoint, {
+      action: "query",
+      titles: iconFile,
+      prop: "imageinfo",
+      iiprop: "url",
+    }));
     const pages = Object.values(json.query?.pages || {});
     const page = pages.find((value) => value.imageinfo?.[0]?.url);
     if (!page) return null;
@@ -204,16 +257,13 @@
 
   async function queryWikiPassiveIconFile(endpoint, title) {
     const escapedTitle = `"${String(title || "").replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
-    const url = new URL(endpoint.api);
-    url.searchParams.set("origin", "*");
-    url.searchParams.set("format", "json");
-    url.searchParams.set("action", "cargoquery");
-    url.searchParams.set("tables", "passive_skills");
-    url.searchParams.set("fields", "name,icon");
-    url.searchParams.set("where", `name=${escapedTitle}`);
-    url.searchParams.set("limit", "1");
-
-    const json = await fetchJsonWithRetry(url.toString());
+    const json = await fetchJsonWithRetry(wikiApiUrl(endpoint, {
+      action: "cargoquery",
+      tables: "passive_skills",
+      fields: "name,icon",
+      where: `name=${escapedTitle}`,
+      limit: "1",
+    }));
     return json.cargoquery?.[0]?.title?.icon || "";
   }
 
@@ -233,10 +283,10 @@
 
     if (kind === "skill") {
       return (
-        titled.find((image) => imageSrc(image).includes("_skill_icon")) ||
-        container.querySelector("img[src*='_skill_icon']") ||
         titled.find((image) => imageSrc(image).includes("_inventory_icon")) ||
         inventoryImage(container) ||
+        titled.find((image) => imageSrc(image).includes("_skill_icon")) ||
+        container.querySelector("img[src*='_skill_icon']") ||
         images.find(isRealWikiImage) ||
         null
       );

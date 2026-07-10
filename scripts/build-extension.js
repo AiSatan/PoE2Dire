@@ -24,12 +24,16 @@ const CORE_FRAGMENTS = [
   "config.js",
   "source.js",
   "parser.js",
+  "storage.js",
   "icon-store.js",
+  "details-store.js",
   "icon-requests.js",
   "icon-names.js",
   "wiki-icon-source.js",
+  "entity-details.js",
   "icons.js",
   "renderer.js",
+  "tooltip.js",
   "utils.js",
   "index.js",
 ];
@@ -50,7 +54,7 @@ function main() {
     buildTarget(target);
   }
 
-  // The phone bookmarklet & userscripts are need the core CSS embedded in the generated JS.
+  // The phone bookmarklet & userscripts need the core CSS embedded in the generated JS.
   const css = fs.readFileSync(path.join(SRC, "core", CORE_CSS_FILE), "utf8");
   const bookmarkletPath = path.join(DIST, "gist", BOOKMARKLET_FILE);
   fs.mkdirSync(path.dirname(bookmarkletPath), { recursive: true });

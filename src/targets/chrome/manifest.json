@@ -3,6 +3,7 @@
   "name": "PoE2Dire",
   "short_name": "PoE2Dire",
   "version": "__VERSION__",
+  "minimum_chrome_version": "99",
   "description": "Render Path of Exile patch notes in a Dota-style format.",
   "icons": {
     "16": "assets/icons/PoE2Dire-icon-16.png",

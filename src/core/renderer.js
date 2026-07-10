@@ -19,10 +19,13 @@
     hideOriginalPage(doc);
     doc.body.prepend(mount);
     sourceRoot.classList.add("pdp-hidden-source");
+    renderWikiStatusPill(doc);
   }
 
   function destroyPatchPage(doc) {
     state.renderRunId += 1;
+    state.iconStatus = null;
+    state.retryWaitMs = 0;
     doc.getElementById("PoE2Dire-root")?.remove();
     doc.getElementById("PoE2Dire-style")?.remove();
     restoreViewport(doc);
@@ -160,8 +163,60 @@
     const title = el("div", "pdp-group-title", group.title);
     const items = el("ul", "pdp-changes", group.items.map((item) => el("li", "", highlightChange(doc, item))));
     const article = el("article", "pdp-group", [icon, el("div", "pdp-group-body", [title, meta, items])]);
+    article.tabIndex = 0;
     article.dataset.pdpIconKey = iconDomKey(group);
+    article.dataset.pdpDetailsTitle = group.wikiTitle || group.title;
+    article.dataset.pdpDetailsKind = group.iconKind || "general";
     return article;
+  }
+
+  function renderWikiStatusPill(doc) {
+    const root = doc.getElementById("PoE2Dire-root");
+    if (!root) return;
+
+    const status = wikiStatusContent();
+    if (!status) {
+      doc.getElementById("PoE2Dire-wiki-status")?.remove();
+      return;
+    }
+
+    let pill = doc.getElementById("PoE2Dire-wiki-status");
+    if (!pill) {
+      pill = el("div", "pdp-wiki-status");
+      pill.id = "PoE2Dire-wiki-status";
+      pill.setAttribute("role", "status");
+      pill.setAttribute("aria-live", "polite");
+      root.append(pill);
+    }
+
+    pill.className = status.modifier ? `pdp-wiki-status ${status.modifier}` : "pdp-wiki-status";
+    pill.textContent = status.text;
+  }
+
+  function wikiStatusContent() {
+    if (state.retryWaitMs > 1500) {
+      return {
+        text: `Wiki is busy, retrying in ${Math.ceil(state.retryWaitMs / 1000)}s…`,
+        modifier: "pdp-wiki-status-wait",
+      };
+    }
+
+    const status = state.iconStatus;
+    if (!status) return null;
+
+    if (!status.done) {
+      return { text: `Loading wiki icons… ${status.settled}/${status.total}`, modifier: "" };
+    }
+
+    if (status.failed) {
+      const noun = status.failed === 1 ? "icon" : "icons";
+      return {
+        text: `Couldn't load ${status.failed} ${noun} from the wiki, will retry next visit.`,
+        modifier: "pdp-wiki-status-error",
+      };
+    }
+
+    return null;
   }
 
   function updatePatchIcons(doc, patch) {
@@ -272,24 +327,24 @@
     throw lastError || new Error("Image proxy failed");
   }
 
-  async function renderableIconUrl(url) {
+  async function renderableIconUrl(url, priority) {
     if (!isWikiImageUrl(url)) return url;
 
     const api = extensionApi();
     if (!api?.runtime?.id || !api.runtime.sendMessage) {
       const userscriptRequest = userscriptXmlHttpRequest();
       if (!userscriptRequest) return url;
-      return cachedWikiImageProxy(userscriptRequest, url, fetchWikiImageViaUserscript);
+      return cachedWikiImageProxy(userscriptRequest, url, fetchWikiImageViaUserscript, priority);
     }
 
-    return cachedWikiImageProxy(api, url, fetchWikiImageViaExtension);
+    return cachedWikiImageProxy(api, url, fetchWikiImageViaExtension, priority);
   }
 
-  function cachedWikiImageProxy(proxy, url, fetchImage) {
+  function cachedWikiImageProxy(proxy, url, fetchImage, priority) {
     const cached = iconImageCache.get(url);
     if (cached) return cached;
 
-    const request = queueWikiImageProxy(proxy, url, fetchImage).catch((error) => {
+    const request = queueWikiImageProxy(proxy, url, fetchImage, priority).catch((error) => {
       iconImageCache.delete(url);
       throw error;
     });
@@ -297,15 +352,17 @@
     return request;
   }
 
-  function queueWikiImageProxy(proxy, url, fetchImage) {
+  function queueWikiImageProxy(proxy, url, fetchImage, priority) {
     return new Promise((resolve, reject) => {
-      iconImageQueue.push({ proxy, url, fetchImage, resolve, reject });
+      const job = { proxy, url, fetchImage, resolve, reject };
+      if (priority) iconImageQueue.unshift(job);
+      else iconImageQueue.push(job);
       drainIconImageQueue();
     });
   }
 
   function drainIconImageQueue() {
-    const limit = Math.max(1, Number(CONFIG.wikiLookupConcurrency) || 1);
+    const limit = Math.max(1, Number(CONFIG.wikiImageConcurrency) || 1);
     while (activeIconImageRequests < limit && iconImageQueue.length) {
       const job = iconImageQueue.shift();
       activeIconImageRequests += 1;
@@ -318,39 +375,38 @@
     }
   }
 
-  async function fetchWikiImageViaExtension(api, url) {
-    let lastResponse = null;
-    for (let attempt = 0; attempt <= CONFIG.network.retries; attempt += 1) {
-      let response = null;
+  function fetchWikiImageViaExtension(api, url) {
+    return fetchWikiImageWithRetry(async () => {
       try {
-        response = await runtimeSendMessage(api, { type: "poe2dire:fetch-image", url });
+        return await api.runtime.sendMessage({ type: "poe2dire:fetch-image", url });
       } catch (error) {
-        response = {
+        return {
           ok: false,
           status: 0,
           statusText: error.message || "Network Error",
           retryAfter: "",
         };
       }
-      if (response?.ok && response.dataUrl) return response.dataUrl;
-
-      lastResponse = response || { status: 0, statusText: "Network Error", retryAfter: "" };
-      if (attempt === CONFIG.network.retries || !isRetryableIconResponse(response)) break;
-      await delay(retryDelayMs(lastResponse, attempt));
-    }
-
-    throw new Error(lastResponse?.statusText || "Image proxy failed");
+    });
   }
 
-  async function fetchWikiImageViaUserscript(request, url) {
+  function fetchWikiImageViaUserscript(request, url) {
+    return fetchWikiImageWithRetry(() => userscriptImageDataUrl(request, url));
+  }
+
+  async function fetchWikiImageWithRetry(fetchImage) {
     let lastResponse = null;
+
     for (let attempt = 0; attempt <= CONFIG.network.retries; attempt += 1) {
-      const response = await userscriptImageDataUrl(request, url);
+      const response = await fetchImage();
       if (response?.ok && response.dataUrl) return response.dataUrl;
 
       lastResponse = response || { status: 0, statusText: "Network Error", retryAfter: "" };
-      if (attempt === CONFIG.network.retries || !isRetryableIconResponse(response)) break;
-      await delay(retryDelayMs(lastResponse, attempt));
+      if (attempt === CONFIG.network.retries || !isRetryableWikiResponse(lastResponse)) break;
+
+      const delayMs = retryDelayMs(lastResponse, attempt);
+      if (delayMs > CONFIG.network.maxRetryDelayMs) break;
+      await retryWait(delayMs);
     }
 
     throw new Error(lastResponse?.statusText || "Image proxy failed");
@@ -405,15 +461,10 @@
 
   function base64Encode(bytes) {
     let binary = "";
-    for (const byte of bytes) {
-      binary += String.fromCharCode(byte);
+    for (let index = 0; index < bytes.length; index += 0x8000) {
+      binary += String.fromCharCode(...bytes.subarray(index, index + 0x8000));
     }
     return btoa(binary);
-  }
-
-  function isRetryableIconResponse(response) {
-    if (response?.cfMitigated === "challenge") return true;
-    return RETRYABLE_HTTP_STATUS.has(response?.status || 0);
   }
 
   function isWikiImageUrl(url) {

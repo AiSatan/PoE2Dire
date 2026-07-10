@@ -16,7 +16,13 @@
     const tokens = collectTokens(root);
     const patch = parsePatch(tokens);
     state.wikiDone = false;
+    state.wikiEndpoints = apiEndpointsForPatch(patch);
     renderPatchPage(document, root, patch);
+
+    if (!state.cacheCleaned) {
+      state.cacheCleaned = true;
+      cleanupStaleCacheEntries();
+    }
 
     const renderResolvedPatchNow = (resolvedPatch) => {
       if (runId !== state.renderRunId) return false;
@@ -34,6 +40,8 @@
       .catch((error) => {
         if (runId !== state.renderRunId) return null;
         state.wikiDone = true;
+        state.iconStatus = null;
+        state.retryWaitMs = 0;
         renderPatchPage(document, root, patch);
         console.warn("[PoE2Dire] Wiki icon lookup failed:", error);
         return patch;

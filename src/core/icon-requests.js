@@ -1,19 +1,139 @@
   // only retry on these erros, no point in hitting 404 each time
   const RETRYABLE_HTTP_STATUS = new Set([0, 408, 425, 429, 500, 502, 503, 504]);
 
-  async function fetchJsonWithRetry(url) {
+  const wikiRequestQueue = [];
+  let activeWikiRequests = 0;
+  let wikiDispatchTimer = 0;
+  let lastWikiDispatchAt = 0;
+
+  async function fetchJsonWithRetry(url, priority) {
     for (let attempt = 0; attempt <= CONFIG.network.retries; attempt += 1) {
-      const response = await fetchJsonResponse(url);
+      throwIfWikiCoolingDown();
+
+      const response = await fetchJsonThroughQueue(url, priority);
       if (response.ok) return response.json;
 
-      if (attempt === CONFIG.network.retries || !isRetryableWikiResponse(response)) {
-        throw new Error(`${response.status} ${response.statusText}`);
+      if (response.cfMitigated === "challenge") {
+        startWikiCooldown(CONFIG.network.challengeCooldownMs, "challenge");
+        throw wikiRequestError(response);
       }
 
-      await delay(retryDelayMs(response, attempt));
+      if (attempt === CONFIG.network.retries || !isRetryableWikiResponse(response)) {
+        throw wikiRequestError(response);
+      }
+
+      const delayMs = retryDelayMs(response, attempt);
+      if (delayMs > CONFIG.network.maxRetryDelayMs) {
+        startWikiCooldown(delayMs, "rate-limit");
+        throw wikiRequestError(response);
+      }
+
+      await retryWait(delayMs);
     }
 
     throw new Error("retry loop failed");
+  }
+
+  function throwIfWikiCoolingDown() {
+    const remaining = (state.wikiCooldownUntil || 0) - Date.now();
+    if (remaining <= 0) return;
+
+    const error = new Error("Wiki requests paused after rate limiting");
+    error.coolingDown = true;
+    error.retryInMs = remaining;
+    if (state.wikiCooldownReason === "challenge") error.challenged = true;
+    else error.rateLimited = true;
+    throw error;
+  }
+
+  function startWikiCooldown(durationMs, reason) {
+    const until = Date.now() + Math.min(durationMs, CONFIG.network.maxCooldownMs);
+    if (until <= (state.wikiCooldownUntil || 0)) return;
+    state.wikiCooldownUntil = until;
+    state.wikiCooldownReason = reason;
+    console.warn(`[PoE2Dire] Wiki rate limited (${reason}), pausing requests for ${Math.ceil((until - Date.now()) / 1000)}s`);
+  }
+
+  function wikiRequestError(response) {
+    const status = response?.status || 0;
+    const statusText = response?.statusText || "";
+    const label = status
+      ? `HTTP ${status}${statusText ? ` ${statusText}` : ""}`
+      : statusText || "Network Error";
+    const error = new Error(label);
+    error.status = status;
+    if (response?.cfMitigated === "challenge") error.challenged = true;
+    if (status === 429) error.rateLimited = true;
+    return error;
+  }
+
+  async function fetchJsonThroughQueue(url, priority) {
+    await acquireWikiRequestSlot(priority);
+    try {
+      return await fetchJsonResponse(url);
+    } finally {
+      releaseWikiRequestSlot();
+    }
+  }
+
+  function acquireWikiRequestSlot(priority) {
+    return new Promise((resolve) => {
+      if (priority) wikiRequestQueue.unshift(resolve);
+      else wikiRequestQueue.push(resolve);
+      drainWikiRequestQueue();
+    });
+  }
+
+  function releaseWikiRequestSlot() {
+    activeWikiRequests -= 1;
+    drainWikiRequestQueue();
+  }
+
+  function drainWikiRequestQueue() {
+    const limit = Math.max(1, Number(CONFIG.wikiRequestConcurrency) || 1);
+    while (activeWikiRequests < limit && wikiRequestQueue.length) {
+      const waitMs = lastWikiDispatchAt + CONFIG.network.minRequestIntervalMs - Date.now();
+      if (waitMs > 0) {
+        scheduleWikiDispatch(waitMs);
+        return;
+      }
+      lastWikiDispatchAt = Date.now();
+      activeWikiRequests += 1;
+      wikiRequestQueue.shift()();
+    }
+  }
+
+  function scheduleWikiDispatch(waitMs) {
+    if (wikiDispatchTimer) return;
+    wikiDispatchTimer = setTimeout(() => {
+      wikiDispatchTimer = 0;
+      drainWikiRequestQueue();
+    }, waitMs);
+  }
+
+  function wikiApiUrl(endpoint, params) {
+    const url = new URL(endpoint.api);
+    url.searchParams.set("origin", "*");
+    url.searchParams.set("format", "json");
+    url.searchParams.set("maxlag", "5");
+    Object.entries(params).forEach(([key, value]) => {
+      url.searchParams.set(key, value);
+    });
+    return url.toString();
+  }
+
+  async function retryWait(delayMs) {
+    setRetryWait(delayMs);
+    try {
+      await delay(delayMs);
+    } finally {
+      setRetryWait(0);
+    }
+  }
+
+  function setRetryWait(delayMs) {
+    state.retryWaitMs = delayMs;
+    renderWikiStatusPill(document);
   }
 
   async function fetchJsonResponse(url) {
@@ -60,7 +180,7 @@
       {
         method: "GET",
         url,
-        headers: { Accept: "application/json" },
+        headers: { Accept: "application/json", "Api-User-Agent": CONFIG.apiUserAgent },
         responseType: "text",
         timeout: 30000,
       },
@@ -183,25 +303,11 @@
     if (!api?.runtime?.id || !api.runtime.sendMessage) return null;
 
     try {
-      const response = await runtimeSendMessage(api, { type: "poe2dire:fetch-json", url });
+      const response = await api.runtime.sendMessage({ type: "poe2dire:fetch-json", url });
       return response?.proxied ? response : null;
     } catch (error) {
       return null;
     }
-  }
-
-  function runtimeSendMessage(api, message) {
-    if (typeof browser !== "undefined" && api === browser) {
-      return api.runtime.sendMessage(message);
-    }
-
-    return new Promise((resolve, reject) => {
-      api.runtime.sendMessage(message, (response) => {
-        const error = api.runtime.lastError;
-        if (error) reject(error);
-        else resolve(response);
-      });
-    });
   }
 
   function retryDelayMs(response, attempt) {
