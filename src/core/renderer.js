@@ -1,6 +1,11 @@
   const iconImageQueue = [];
   const iconImageCache = new Map();
   let activeIconImageRequests = 0;
+  let tocSpyPending = false;
+
+  if (typeof window !== "undefined") {
+    window.addEventListener("scroll", scheduleTocSpy, { passive: true });
+  }
 
   function renderPatchPage(doc, sourceRoot, patch) {
     doc.getElementById("PoE2Dire-root")?.remove();
@@ -20,7 +25,7 @@
 
     const mount = doc.createElement("div");
     mount.id = "PoE2Dire-root";
-    mount.append(renderTopButton(doc), page);
+    mount.append(page);
 
     doc.body.classList.add("pdp-body");
     applyViewport(doc);
@@ -28,6 +33,7 @@
     doc.body.prepend(mount);
     sourceRoot.classList.add("pdp-hidden-source");
     renderWikiStatusPill(doc);
+    scheduleTocSpy();
   }
 
   function destroyPatchPage(doc) {
@@ -86,16 +92,6 @@
     state.viewport = null;
   }
 
-  function renderTopButton(doc) {
-    const button = el("button", "pdp-top-button", "TOP");
-    button.type = "button";
-    button.setAttribute("aria-label", "Go back to top");
-    button.addEventListener("click", () => {
-      doc.defaultView.scrollTo({ top: 0, behavior: "smooth" });
-    });
-    return button;
-  }
-
   function renderHero(patch) {
     return el("header", "pdp-hero", [
       el("div", "pdp-hero-inner", [
@@ -109,7 +105,11 @@
     const groups = orderedSectionGroups(section);
     const node = el("section", "pdp-section", [
       el("h2", "pdp-section-title", section.displayTitle),
-      el("div", "pdp-section-body", groups.map((group) => renderGroup(doc, section, group))),
+      el("div", "pdp-section-body", groups.map((group) => {
+        const rendered = renderGroup(doc, section, group);
+        rendered.id = groupAnchorId(index, section.groups.indexOf(group));
+        return rendered;
+      })),
     ]);
     node.id = sectionAnchorId(index);
     return node;
@@ -119,41 +119,90 @@
     return `pdp-section-${index}`;
   }
 
+  function groupAnchorId(sectionIndex, groupIndex) {
+    return `pdp-group-${sectionIndex}-${groupIndex}`;
+  }
+
+  function resolveTocEntries(patch) {
+    const entries = (patch.toc || [])
+      .map((entry) => ({ text: entry.text, target: tocTargetId(patch, entry.text) }))
+      .filter((entry) => entry.target);
+    if (entries.length) return entries;
+
+    return patch.sections.map((section, index) => ({
+      text: section.displayTitle,
+      target: sectionAnchorId(index),
+    }));
+  }
+
+  function tocTargetId(patch, text) {
+    const key = normalKey(text);
+    if (!key) return "";
+    if (normalKey(patch.title) === key) return "top";
+
+    for (let index = 0; index < patch.sections.length; index += 1) {
+      const section = patch.sections[index];
+      if (normalKey(section.title) === key || normalKey(section.displayTitle) === key) {
+        return sectionAnchorId(index);
+      }
+    }
+
+    for (let index = 0; index < patch.sections.length; index += 1) {
+      const groups = patch.sections[index].groups;
+      for (let groupIndex = 0; groupIndex < groups.length; groupIndex += 1) {
+        if (normalKey(groups[groupIndex].title) === key) return groupAnchorId(index, groupIndex);
+      }
+    }
+
+    return "";
+  }
+
   function renderToc(doc, patch) {
-    if (patch.sections.length < 2) return null;
+    const entries = resolveTocEntries(patch);
+    if (entries.length < 2) return null;
 
     return el("aside", "pdp-toc", [
       el("div", "pdp-toc-title", "Contents"),
-      renderTocList(doc, patch),
+      renderTocList(doc, entries),
     ]);
   }
 
-  function renderTocList(doc, patch) {
-    return el("ul", "pdp-toc-list", patch.sections.map((section, index) => {
-      const link = el("a", "pdp-toc-link", section.displayTitle);
-      link.href = `#${sectionAnchorId(index)}`;
+  function renderTocList(doc, entries) {
+    return el("ul", "pdp-toc-list", entries.map((entry) => {
+      const link = el("a", "pdp-toc-link", entry.text);
+      link.href = `#${entry.target}`;
+      link.dataset.pdpTarget = entry.target;
       link.addEventListener("click", (event) => {
         event.preventDefault();
         closeTocDrawer(doc);
-        doc.getElementById(sectionAnchorId(index))?.scrollIntoView({ behavior: "smooth", block: "start" });
+        scrollToTocTarget(doc, entry.target);
       });
       return el("li", "", link);
     }));
   }
 
+  function scrollToTocTarget(doc, target) {
+    if (target === "top") {
+      doc.defaultView.scrollTo(0, 0);
+      return;
+    }
+    doc.getElementById(target)?.scrollIntoView({ block: "start" });
+  }
+
   function renderTocBar(doc, patch) {
-    if (patch.sections.length < 2) return null;
+    const entries = resolveTocEntries(patch);
+    if (entries.length < 2) return null;
 
     const button = el("button", "pdp-toc-bar-button", "Sections");
     button.type = "button";
-    button.setAttribute("aria-expanded", "false");
+    button.setAttribute("aria-expanded", "true");
 
-    const bar = el("div", "pdp-toc-mobile", [
+    const bar = el("div", "pdp-toc-mobile pdp-toc-open", [
       el("div", "pdp-toc-bar", [
-        el("div", "pdp-toc-bar-title", patch.version || patch.title),
         button,
+        el("div", "pdp-toc-bar-title", patch.version || patch.title),
       ]),
-      el("div", "pdp-toc-drawer", renderTocList(doc, patch)),
+      el("div", "pdp-toc-drawer", renderTocList(doc, entries)),
     ]);
 
     button.addEventListener("click", () => {
@@ -169,6 +218,57 @@
     if (!bar) return;
     bar.classList.remove("pdp-toc-open");
     bar.querySelector(".pdp-toc-bar-button")?.setAttribute("aria-expanded", "false");
+  }
+
+  function scheduleTocSpy() {
+    if (tocSpyPending) return;
+    tocSpyPending = true;
+    requestAnimationFrame(() => {
+      tocSpyPending = false;
+      updateActiveTocEntry(document);
+    });
+  }
+
+  function updateActiveTocEntry(doc) {
+    const links = Array.from(doc.querySelectorAll(".pdp-toc-link[data-pdp-target]"));
+    if (!links.length) return;
+
+    const targets = [];
+    links.forEach((link) => {
+      if (!targets.includes(link.dataset.pdpTarget)) targets.push(link.dataset.pdpTarget);
+    });
+
+    let activeTarget = targets[0];
+    targets.forEach((target) => {
+      const top = tocTargetTop(doc, target);
+      if (top !== null && top <= 120) activeTarget = target;
+    });
+
+    links.forEach((link) => {
+      const isActive = link.dataset.pdpTarget === activeTarget;
+      const wasActive = link.classList.contains("pdp-toc-active");
+      link.classList.toggle("pdp-toc-active", isActive);
+      if (isActive && !wasActive) revealTocLink(link);
+    });
+  }
+
+  function tocTargetTop(doc, target) {
+    if (target === "top") return -(doc.defaultView.scrollY || 0);
+    const element = doc.getElementById(target);
+    return element ? element.getBoundingClientRect().top : null;
+  }
+
+  function revealTocLink(link) {
+    const container = link.closest(".pdp-toc");
+    if (!container) return;
+
+    const linkRect = link.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+    if (linkRect.top < containerRect.top) {
+      container.scrollTop += linkRect.top - containerRect.top - 40;
+    } else if (linkRect.bottom > containerRect.bottom) {
+      container.scrollTop += linkRect.bottom - containerRect.bottom + 40;
+    }
   }
 
   function orderedSectionGroups(section) {

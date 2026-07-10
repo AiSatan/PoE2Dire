@@ -50,6 +50,7 @@
       }
 
       if (node.matches("ul,ol") && isTocList(node)) {
+        pushTocToken(node);
         return;
       }
 
@@ -75,6 +76,13 @@
       }
 
       Array.from(node.childNodes).forEach(walk);
+    }
+
+    function pushTocToken(node) {
+      const entries = Array.from(node.querySelectorAll("a[href]"))
+        .map((anchor) => ({ text: cleanText(anchor.textContent) }))
+        .filter((entry) => entry.text);
+      if (entries.length) tokens.push({ type: "toc", text: "", image: "", links: [], entries });
     }
 
     function pushToken(type, text, element) {

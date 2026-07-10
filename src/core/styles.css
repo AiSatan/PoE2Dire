@@ -18,33 +18,6 @@
     linear-gradient(180deg, #0f1114 0, #050607 100%);
 }
 
-.pdp-top-button {
-  position: fixed;
-  right: .9rem;
-  bottom: .9rem;
-  z-index: 2147483647;
-  width: 3rem;
-  height: 3rem;
-  border: 1px solid rgba(219, 80, 54, .78);
-  border-radius: 50%;
-  color: #f4efe8;
-  background: rgba(15, 17, 20, .92);
-  box-shadow: 0 .4rem 1rem rgba(0, 0, 0, .42);
-  font: 800 .72rem/1 Arial, Helvetica, sans-serif;
-  letter-spacing: .08em;
-  cursor: pointer;
-}
-
-.pdp-top-button:hover {
-  border-color: rgba(241, 70, 46, .96);
-  background: rgba(103, 38, 23, .96);
-}
-
-.pdp-top-button:focus-visible {
-  outline: 2px solid #f1462e;
-  outline-offset: 2px;
-}
-
 .pdp-page {
   min-height: 100vh;
   color: #aeb9bf;
@@ -602,6 +575,34 @@
   background: rgba(241, 70, 46, .08);
 }
 
+.pdp-toc-link.pdp-toc-active {
+  border-left-color: #f1462e;
+  color: #f4efe8;
+  background: rgba(241, 70, 46, .14);
+}
+
+.pdp-toc,
+.pdp-toc-drawer {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(174, 193, 202, .3) transparent;
+}
+
+.pdp-toc::-webkit-scrollbar,
+.pdp-toc-drawer::-webkit-scrollbar {
+  width: 5px;
+}
+
+.pdp-toc::-webkit-scrollbar-thumb,
+.pdp-toc-drawer::-webkit-scrollbar-thumb {
+  border-radius: 3px;
+  background: rgba(174, 193, 202, .25);
+}
+
+.pdp-toc::-webkit-scrollbar-track,
+.pdp-toc-drawer::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 .pdp-toc-mobile {
   position: sticky;
   top: 0;
@@ -659,12 +660,18 @@
   display: block;
 }
 
-.pdp-section {
+.pdp-section,
+.pdp-general-list,
+.pdp-subsection,
+.pdp-group {
   scroll-margin-top: 3.9rem;
 }
 
 @media (min-width: 64rem) {
-  .pdp-section {
+  .pdp-section,
+  .pdp-general-list,
+  .pdp-subsection,
+  .pdp-group {
     scroll-margin-top: 1rem;
   }
 

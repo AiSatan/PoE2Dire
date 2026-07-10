@@ -19,6 +19,7 @@
       version,
       eyebrow: "Gameplay Update",
       sections: [],
+      toc: [],
     };
 
     let currentSection = null;
@@ -27,6 +28,10 @@
 
     for (let index = 0; index < tokens.length; index += 1) {
       const token = tokens[index];
+      if (token.type === "toc") {
+        patch.toc.push(...(token.entries || []));
+        continue;
+      }
       if (token === titleToken || token.type === "image") continue;
       if (token.text === title || token.text === "Table of Contents") continue;
 
