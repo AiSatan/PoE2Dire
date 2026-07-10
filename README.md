@@ -8,7 +8,7 @@ Extension for rendering Path of Exile (1 and 2) patch notes in a Dota2-style lay
 
 [Reddit thread](https://www.reddit.com/r/PathOfExile2/comments/1toxfei/dota2_style_patch_notes_browser_extension/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button) of the extension in Path of Exile 2 sub.
 
-<img width="1659" height="1245" alt="preview_update" src="https://github.com/user-attachments/assets/1c379af7-f7a9-4d62-9fed-7dea8895a2f1" />
+<img width="1539" height="1157" alt="preview_update" src="https://github.com/user-attachments/assets/e5e48c44-386b-4df3-8ae6-9d21aa8b9f43" />
 <img width="1201" height="1021" alt="showcase" src="https://github.com/user-attachments/assets/c41b4e58-084c-4a46-969e-76e239129df7" />
 
 
