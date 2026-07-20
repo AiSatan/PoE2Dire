@@ -7,7 +7,7 @@
     "Monster Changes": "Monster Updates",
   };
 
-  const ENTITY_SECTION_PATTERN = /Ascendancy|Skill|Support|Unique|Item|Monster|Passive/i;
+  const ENTITY_SECTION_PATTERN = /Ascendancy|Skill|Support|Unique|Item|Monster|Passive|Vaal Gem/i;
 
   function parsePatch(tokens) {
     const titleToken = tokens.find((token) => /Content Update|Patch Notes/i.test(token.text));

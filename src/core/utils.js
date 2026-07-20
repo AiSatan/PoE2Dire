@@ -101,7 +101,7 @@
     if (/ascendancy|class|hero/i.test(text)) return "ascendancy";
     if (/passive|tree|notable|keystone|cluster/i.test(text)) return "passive";
     if (/support/i.test(text)) return "support";
-    if (/skill|ability|spell|attack/i.test(text)) return "skill";
+    if (/skill|ability|spell|attack|vaal gem/i.test(text)) return "skill";
     if (/unique|item|rune|idol|currency|armour|weapon|ring|amulet|glove|boot|helmet|jewel/i.test(text)) return "item";
     if (/monster|boss|enemy|delirium|breach|ritual/i.test(text)) return "monster";
     if (/bug|fix/i.test(text)) return "bug";
