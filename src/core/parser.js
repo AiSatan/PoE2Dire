@@ -13,7 +13,7 @@
     const titleToken = findTitleToken(tokens);
     const title = titleToken ? titleToken.text : documentPatchTitle();
     const version = title.match(/\b\d+\.\d+\.\d+[a-z]?\b/i)?.[0] || "Patch";
-    const gemNames = gemNamesFor(title, version);
+    const entityNames = entityNamesFor(title, version);
 
     const patch = {
       title,
@@ -112,11 +112,11 @@
           continue;
         }
 
-        const gem = findGemEntity(token.text, gemNames);
-        if (gem) {
-          currentGroup = findOrAddGroup(currentSection, gem.localized, token.image, token.text);
-          currentGroup.iconKind = gem.kind;
-          currentGroup.wikiTitle = gem.title;
+        const named = findNamedEntity(token.text, entityNames);
+        if (named) {
+          currentGroup = findOrAddGroup(currentSection, named.localized, token.image, token.text);
+          currentGroup.iconKind = named.kind;
+          currentGroup.wikiTitle = named.title;
           currentGroup.entity = true;
           currentGroup.items.push(changeItem(formatChange(token.text, currentGroup.title), token));
           continue;

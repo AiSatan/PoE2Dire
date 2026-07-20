@@ -1,9 +1,9 @@
 const fs = require("fs");
 const path = require("path");
 
-const OUTPUT = path.join(__dirname, "..", "src", "core", "gem-names-data.js");
+const OUTPUT = path.join(__dirname, "..", "src", "core", "entity-names-data.js");
 const REQUEST_DELAY_MS = 750;
-const USER_AGENT = "PoE2Dire gem name extractor (https://github.com/aisatan/PoE2Dire)";
+const USER_AGENT = "PoE2Dire name extractor (https://github.com/aisatan/PoE2Dire)";
 
 const LANGUAGES = {
   br: "pt",
@@ -15,18 +15,33 @@ const LANGUAGES = {
   jp: "jp",
 };
 
+const PATTERNS = {
+  gem: /<a class="gem_[a-z]+"[^>]*href="([^"]+)"[^>]*>([^<]+)<\/a>/g,
+  ascendancy: /<a class="[A-Za-z]+" data-hover="[^"]*Ascendancy[^"]*" href="([^"]+)"[^>]*>([^<]+)<\/a>/g,
+  bloodline: /<div class="flex-grow-1 ms-2"><a href="([^"]+)">([^<]+)<\/a><\/div>/g,
+};
+
 const SOURCES = {
   poe1: {
     host: "https://poedb.tw",
-    pages: { Skill_Gems: "skill", Support_Gems: "support", Transfigured_Gems: "skill" },
+    pages: [
+      ["Skill_Gems", "gem", "skill"],
+      ["Support_Gems", "gem", "support"],
+      ["Transfigured_Gems", "gem", "skill"],
+      ["Ascendancy_class", "ascendancy", "ascendancy"],
+      ["Bloodline_Ascendancy_class", "bloodline", "ascendancy"],
+    ],
   },
   poe2: {
     host: "https://poe2db.tw",
-    pages: { Skill_Gems: "skill", Support_Gems: "support", Spirit_Gems: "skill" },
+    pages: [
+      ["Skill_Gems", "gem", "skill"],
+      ["Support_Gems", "gem", "support"],
+      ["Spirit_Gems", "gem", "skill"],
+      ["Ascendancy_class", "ascendancy", "ascendancy"],
+    ],
   },
 };
-
-const GEM_LINK = /<a class="gem_[a-z]+"[^>]*href="\/[a-z]{2}\/([^"]+)"[^>]*>([^<]+)<\/a>/g;
 
 main().catch((error) => {
   console.error(error.message);
@@ -37,15 +52,15 @@ async function main() {
   const data = {};
 
   for (const [game, source] of Object.entries(SOURCES)) {
-    const english = await readGame(source, "us");
-    console.log(`${game}: ${english.size} gems (english)`);
+    const english = await readGame(source, "us", game);
+    console.log(`${game}: ${english.size} english names`);
 
     data[game] = {};
     for (const [subdomain, code] of Object.entries(LANGUAGES)) {
-      const localized = await readGame(source, code);
+      const localized = await readGame(source, code, game);
       const pairs = joinNames(english, localized);
       if (!pairs.size) {
-        console.warn(`${game}/${subdomain}: no names matched, skipped`);
+        console.warn(`${game}/${subdomain}: nothing matched, skipped`);
         continue;
       }
       data[game][subdomain] = pairs;
@@ -54,24 +69,32 @@ async function main() {
   }
 
   fs.writeFileSync(OUTPUT, render(data));
-  const size = Math.round(fs.statSync(OUTPUT).size / 1024);
-  console.log(`Wrote ${path.relative(process.cwd(), OUTPUT)} (${size} KB)`);
+  console.log(`Wrote ${path.relative(process.cwd(), OUTPUT)} (${Math.round(fs.statSync(OUTPUT).size / 1024)} KB)`);
 }
 
-async function readGame(source, code) {
-  const gems = new Map();
+async function readGame(source, code, game) {
+  const names = new Map();
 
-  for (const [page, kind] of Object.entries(source.pages)) {
+  for (const [page, pattern, kind] of source.pages) {
     const html = await fetchPage(`${source.host}/${code}/${page}`);
-    for (const match of html.matchAll(GEM_LINK)) {
-      const slug = decodeURIComponent(match[1]);
+    let found = 0;
+
+    for (const match of html.matchAll(PATTERNS[pattern])) {
+      found += 1;
+      const slug = normalizeSlug(match[1]);
       const name = decodeEntities(match[2]).trim();
-      if (!name || gems.has(slug)) continue;
-      gems.set(slug, { name, kind });
+      if (!slug || !name || names.has(slug)) continue;
+      names.set(slug, { name, kind });
     }
+
+    if (!found) console.warn(`  ${game}/${code}/${page}: pattern "${pattern}" matched nothing`);
   }
 
-  return gems;
+  return names;
+}
+
+function normalizeSlug(href) {
+  return decodeURIComponent(String(href || "")).replace(/^\/?[a-z]{2}\//, "").replace(/^\//, "");
 }
 
 function joinNames(english, localized) {
@@ -108,7 +131,7 @@ function render(data) {
     return `  ${game}: {\n${blocks.join("\n")}\n  },`;
   });
 
-  return `  const GEM_NAME_DATA = {\n${games.join("\n")}\n  };\n`;
+  return `  const ENTITY_NAME_DATA = {\n${games.join("\n")}\n  };\n`;
 }
 
 function decodeEntities(value) {
