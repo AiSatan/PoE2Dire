@@ -74,6 +74,8 @@
       });
       result.found.forEach((image, key) => resolved.set(key, image));
       result.failed.forEach((key) => lookupFailed.add(key));
+
+      if (result.failed.size >= missingJobs.length) break;
     }
 
     applyIconResults(groups, resolved, jobs, lookupFailed);
