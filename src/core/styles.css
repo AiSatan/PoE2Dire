@@ -169,8 +169,8 @@
   display: grid;
   place-items: center;
   width: 4.55rem;
-  height: 4.55rem;
-  overflow: hidden;
+  min-height: 4.55rem;
+  height: fit-content;
   color: #f0e5d1;
   background: var(--icon-color, #8f6a3f);
   box-shadow: 0 .25rem .6rem rgba(0, 0, 0, .4);
