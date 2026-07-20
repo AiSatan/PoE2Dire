@@ -2,13 +2,8 @@ name: Package extensions
 
 on:
   push:
-    branches:
-      - main
     tags:
       - "v*"
-  pull_request:
-    branches:
-      - main
   workflow_dispatch:
 
 permissions:
@@ -44,13 +39,13 @@ jobs:
           if-no-files-found: error
 
       - name: Upload phone bookmarklet pages artifact
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        if: startsWith(github.ref, 'refs/tags/v')
         uses: actions/upload-pages-artifact@v5
         with:
           path: dist/gist
 
   deploy-pages:
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    if: startsWith(github.ref, 'refs/tags/v')
     needs: package
     runs-on: ubuntu-latest
     environment:
@@ -63,7 +58,7 @@ jobs:
         uses: actions/deploy-pages@v5
 
   release:
-    if: github.event_name != 'pull_request' && startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v')
     needs: package
     runs-on: ubuntu-latest
     permissions:
