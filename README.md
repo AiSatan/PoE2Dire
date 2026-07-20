@@ -1,3 +1,12 @@
+🇬🇧 English ·
+[🇧🇷 Português](README.pt-br.md) ·
+[🇷🇺 Русский](README.ru.md) ·
+[🇹🇭 ไทย](README.th.md) ·
+[🇩🇪 Deutsch](README.de.md) ·
+[🇫🇷 Français](README.fr.md) ·
+[🇪🇸 Español](README.es.md) ·
+[🇯🇵 日本語](README.ja.md)
+
 > [!NOTE]
 > PoE2Dire is an unofficial fan-made project and is not affiliated with, associated with, endorsed by, or sponsored by Grinding Gear Games or Path of Exile.
 
