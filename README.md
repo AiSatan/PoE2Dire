@@ -36,6 +36,8 @@ https://jp.pathofexile.com/forum/*
 
 It still declares access to `poewiki.net` and `poe2wiki.net` for info lookup and assets.
 
+Additionally, `cdn.poedb.tw` and `cdn.poe2db.tw` are used for fast icon lookup.
+
 
 ## How to use?
 

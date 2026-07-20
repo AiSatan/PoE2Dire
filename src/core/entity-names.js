@@ -29,6 +29,11 @@
     return (ENTITY_NAME_DATA[game] || {})[subdomain] || null;
   }
 
+  function entityIconsFor(title, version) {
+    const game = prefersPoe2Wiki({ title, version }) ? "poe2" : "poe1";
+    return ENTITY_ICON_DATA[game] || {};
+  }
+
   function findNamedEntity(text, names) {
     if (!names) return null;
 

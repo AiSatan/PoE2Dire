@@ -14,6 +14,7 @@
     const title = titleToken ? titleToken.text : documentPatchTitle();
     const version = title.match(/\b\d+\.\d+\.\d+[a-z]?\b/i)?.[0] || "Patch";
     const entityNames = entityNamesFor(title, version);
+    const entityIcons = entityIconsFor(title, version);
 
     const patch = {
       title,
@@ -180,6 +181,13 @@
 
     patch.sections.forEach((section) => {
       section.groups = section.groups.filter(groupHasItems);
+      section.groups.forEach((group) => {
+        if (group.icon) return;
+        const icon = entityIcons[String(group.wikiTitle || "").toLowerCase()];
+        if (!icon) return;
+        group.icon = icon;
+        group.source = "PoEDB";
+      });
     });
     patch.sections = patch.sections.filter((section) => section.groups.length > 0 || section.images.length > 0);
     return patch;

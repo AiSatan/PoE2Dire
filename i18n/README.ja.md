@@ -41,6 +41,8 @@ https://jp.pathofexile.com/forum/*
 
 また、説明文や画像の取得のために `poewiki.net` と `poe2wiki.net` へのアクセスを要求します。
 
+さらに、アイコンの高速な取得のために `cdn.poedb.tw` と `cdn.poe2db.tw` を使用します。
+
 
 ## 使い方
 

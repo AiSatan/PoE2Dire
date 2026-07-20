@@ -2,6 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const OUTPUT = path.join(__dirname, "..", "src", "core", "entity-names-data.js");
+const ICON_LINK = /<a[^>]*href="([^"]+)"[^>]*>\s*<img[^>]*src="([^"]+)"/g;
 const REQUEST_DELAY_MS = 750;
 const USER_AGENT = "PoE2Dire name extractor (https://github.com/aisatan/PoE2Dire)";
 
@@ -50,15 +51,19 @@ main().catch((error) => {
 
 async function main() {
   const data = {};
+  const iconData = {};
 
   for (const [game, source] of Object.entries(SOURCES)) {
     const english = await readGame(source, "us", game);
-    console.log(`${game}: ${english.size} english names`);
+    console.log(`${game}: ${english.names.size} english names`);
+
+    iconData[game] = joinIcons(english);
+    console.log(`${game}: ${Object.keys(iconData[game]).length} icons`);
 
     data[game] = {};
     for (const [subdomain, code] of Object.entries(LANGUAGES)) {
       const localized = await readGame(source, code, game);
-      const pairs = joinNames(english, localized);
+      const pairs = joinNames(english.names, localized.names);
       if (!pairs.size) {
         console.warn(`${game}/${subdomain}: nothing matched, skipped`);
         continue;
@@ -68,12 +73,38 @@ async function main() {
     }
   }
 
-  fs.writeFileSync(OUTPUT, render(data));
+  fs.writeFileSync(OUTPUT, render(data) + renderIcons(iconData));
   console.log(`Wrote ${path.relative(process.cwd(), OUTPUT)} (${Math.round(fs.statSync(OUTPUT).size / 1024)} KB)`);
+}
+
+function joinIcons(english) {
+  const icons = {};
+
+  english.names.forEach((entry, slug) => {
+    const url = english.icons.get(slug);
+    if (!url) return;
+
+    const key = entry.name.toLowerCase();
+    if (key && !icons[key]) icons[key] = url;
+  });
+
+  return icons;
+}
+
+function renderIcons(iconData) {
+  const games = Object.entries(iconData).map(([game, icons]) => {
+    const lines = Object.entries(icons)
+      .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+      .map(([key, url]) => `      ${JSON.stringify(key)}: ${JSON.stringify(url)},`);
+    return `    ${game}: {\n${lines.join("\n")}\n    },`;
+  });
+
+  return `\n  const ENTITY_ICON_DATA = {\n${games.join("\n")}\n  };\n`;
 }
 
 async function readGame(source, code, game) {
   const names = new Map();
+  const icons = new Map();
 
   for (const [page, pattern, kind] of source.pages) {
     const html = await fetchPage(`${source.host}/${code}/${page}`);
@@ -87,10 +118,15 @@ async function readGame(source, code, game) {
       names.set(slug, { name, kind });
     }
 
+    for (const match of html.matchAll(ICON_LINK)) {
+      const slug = normalizeSlug(match[1]);
+      if (slug && !icons.has(slug)) icons.set(slug, match[2]);
+    }
+
     if (!found) console.warn(`  ${game}/${code}/${page}: pattern "${pattern}" matched nothing`);
   }
 
-  return names;
+  return { names, icons };
 }
 
 function normalizeSlug(href) {

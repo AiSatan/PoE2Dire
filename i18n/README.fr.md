@@ -41,6 +41,8 @@ https://jp.pathofexile.com/forum/*
 
 Elle demande également l'accès à `poewiki.net` et `poe2wiki.net` pour récupérer les descriptions et les images.
 
+De plus, `cdn.poedb.tw` et `cdn.poe2db.tw` sont utilisés pour une recherche rapide des icônes.
+
 
 ## Comment l'utiliser ?
 
