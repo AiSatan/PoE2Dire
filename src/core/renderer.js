@@ -375,6 +375,13 @@
   }
 
   function wikiStatusContent() {
+    if (state.wikiChallenged) {
+      return {
+        text: "Wiki is blocking requests, try again later.",
+        modifier: "pdp-wiki-status-error",
+      };
+    }
+
     if (state.retryWaitMs > 1500) {
       return {
         text: `Wiki is busy, retrying in ${Math.ceil(state.retryWaitMs / 1000)}s…`,

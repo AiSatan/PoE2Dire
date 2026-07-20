@@ -1,6 +1,8 @@
   // only retry on these erros, no point in hitting 404 each time
   const RETRYABLE_HTTP_STATUS = new Set([0, 408, 425, 429, 500, 502, 503, 504]);
 
+  const BLOCKED_MEDIA_STATUS = 415;
+
   const wikiRequestQueue = [];
   let activeWikiRequests = 0;
   let wikiDispatchTimer = 0;
@@ -8,24 +10,30 @@
 
   async function fetchJsonWithRetry(url, priority) {
     for (let attempt = 0; attempt <= CONFIG.network.retries; attempt += 1) {
-      throwIfWikiCoolingDown();
+      await awaitWikiCooldown();
 
       const response = await fetchJsonThroughQueue(url, priority);
-      if (response.ok) return response.json;
-
-      if (response.cfMitigated === "challenge") {
-        startWikiCooldown(CONFIG.network.challengeCooldownMs, "challenge");
-        throw wikiRequestError(response);
+      if (response.ok) {
+        clearWikiBlock();
+        return response.json;
       }
 
-      if (attempt === CONFIG.network.retries || !isRetryableWikiResponse(response)) {
+      const lastAttempt = attempt === CONFIG.network.retries;
+
+      if (isBlockedResponse(response)) {
+        startWikiCooldown(CONFIG.network.challengeCooldownMs, "challenge");
+        if (lastAttempt) throw wikiRequestError(response);
+        continue;
+      }
+
+      if (lastAttempt || !isRetryableWikiResponse(response)) {
         throw wikiRequestError(response);
       }
 
       const delayMs = retryDelayMs(response, attempt);
       if (delayMs > CONFIG.network.maxRetryDelayMs) {
         startWikiCooldown(delayMs, "rate-limit");
-        throw wikiRequestError(response);
+        continue;
       }
 
       await retryWait(delayMs);
@@ -34,22 +42,44 @@
     throw new Error("retry loop failed");
   }
 
-  function throwIfWikiCoolingDown() {
+  async function awaitWikiCooldown() {
     const remaining = (state.wikiCooldownUntil || 0) - Date.now();
     if (remaining <= 0) return;
 
+    if (state.wikiCooldownWaits >= CONFIG.network.maxCooldownWaits) {
+      throw wikiCooldownError(remaining);
+    }
+
+    state.wikiCooldownWaits += 1;
+    await retryWait(remaining);
+  }
+
+  function wikiCooldownError(remaining) {
     const error = new Error("Wiki requests paused after rate limiting");
     error.retryInMs = remaining;
     if (state.wikiCooldownReason === "challenge") error.challenged = true;
     else error.rateLimited = true;
-    throw error;
+    return error;
+  }
+
+  function isBlockedResponse(response) {
+    if (response?.cfMitigated === "challenge") return true;
+    return response?.status === BLOCKED_MEDIA_STATUS;
   }
 
   function startWikiCooldown(durationMs, reason) {
+    if (reason === "challenge") state.wikiChallenged = true;
     const until = Date.now() + Math.min(durationMs, CONFIG.network.maxCooldownMs);
     if (until <= (state.wikiCooldownUntil || 0)) return;
     state.wikiCooldownUntil = until;
     state.wikiCooldownReason = reason;
+  }
+
+  function clearWikiBlock() {
+    state.wikiCooldownWaits = 0;
+    if (!state.wikiChallenged) return;
+    state.wikiChallenged = false;
+    renderWikiStatusPill(document);
   }
 
   function wikiRequestError(response) {
@@ -60,7 +90,7 @@
       : statusText || "Network Error";
     const error = new Error(label);
     error.status = status;
-    if (response?.cfMitigated === "challenge") error.challenged = true;
+    if (isBlockedResponse(response)) error.challenged = true;
     if (status === 429) error.rateLimited = true;
     return error;
   }
@@ -68,7 +98,7 @@
   async function fetchJsonThroughQueue(url, priority) {
     await acquireWikiRequestSlot(priority);
     try {
-      throwIfWikiCoolingDown();
+      await awaitWikiCooldown();
       return await fetchJsonResponse(url);
     } finally {
       releaseWikiRequestSlot();

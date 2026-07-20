@@ -25,6 +25,7 @@
       maxRetryDelayMs: 30000,
       challengeCooldownMs: 60000,
       maxCooldownMs: 120000,
+      maxCooldownWaits: 2,
       userscriptTimeoutMs: 30000,
     },
     ui: {
@@ -44,4 +45,6 @@
     retryWaitMs: 0,
     wikiCooldownUntil: 0,
     wikiCooldownReason: "",
+    wikiCooldownWaits: 0,
+    wikiChallenged: false,
   };
