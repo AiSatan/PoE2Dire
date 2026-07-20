@@ -118,6 +118,16 @@
           continue;
         }
 
+        const annotated = findAnnotatedEntity(token.text);
+        if (annotated) {
+          currentGroup = findOrAddGroup(currentSection, annotated.localized, token.image, token.text);
+          currentGroup.iconKind = knownEntityKind(annotated.title, entityNames);
+          currentGroup.wikiTitle = annotated.title;
+          currentGroup.entity = true;
+          currentGroup.items.push(changeItem(formatChange(token.text, currentGroup.title), token));
+          continue;
+        }
+
         const named = findNamedEntity(token.text, entityNames);
         if (named) {
           currentGroup = findOrAddGroup(currentSection, named.localized, token.image, token.text);

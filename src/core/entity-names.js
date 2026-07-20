@@ -1,5 +1,27 @@
+  const ANNOTATED_NAME = /([\p{L}])\s*[(（]\s*([A-Z][A-Za-z'’\-]*(?:\s+[A-Za-z'’\-]+)*)\s*[)）]/gu;
+  const LATIN_SCRIPT = /\p{Script=Latin}/u;
+
   let entityOrderSource = null;
   let entityOrderKeys = null;
+
+  function findAnnotatedEntity(text) {
+    const line = cleanText(text);
+
+    for (const match of line.matchAll(ANNOTATED_NAME)) {
+      if (LATIN_SCRIPT.test(match[1])) continue;
+
+      const at = match.index + match[1].length;
+      const localized = (line.slice(0, at).match(/[^\s(（)）,、。]+$/) || [""])[0];
+      return { localized: localized || match[2], title: match[2] };
+    }
+
+    return null;
+  }
+
+  function knownEntityKind(title, names) {
+    const found = names ? names[String(title).toLowerCase()] : null;
+    return found ? found[1] : "item";
+  }
 
   function entityNamesFor(title, version) {
     const subdomain = String(location.hostname || "").split(".")[0];
