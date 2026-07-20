@@ -320,7 +320,7 @@
 
   .pdp-icon {
     width: 3.25rem;
-    height: 3.25rem;
+    min-height: 3.25rem;
   }
 
   .pdp-group-title {
