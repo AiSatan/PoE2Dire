@@ -90,6 +90,34 @@
   padding-bottom: 1.4rem;
 }
 
+.pdp-section-images {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0 1.35rem 1.4rem;
+}
+
+.pdp-figure {
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid rgba(120, 165, 190, .22);
+  border-radius: 6px;
+  background: rgba(10, 20, 28, .55);
+}
+
+.pdp-figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.pdp-figure-caption {
+  padding: .5rem .85rem .6rem;
+  color: #9fb6c4;
+  font-size: .92rem;
+  line-height: 1.35;
+}
+
 .pdp-subsection-title {
   margin: 0;
   padding: .62rem 1.35rem .55rem;

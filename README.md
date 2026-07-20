@@ -1,9 +1,18 @@
+🇬🇧 English ·
+[🇧🇷 Português](i18n/README.pt-br.md) ·
+[🇷🇺 Русский](i18n/README.ru.md) ·
+[🇹🇭 ไทย](i18n/README.th.md) ·
+[🇩🇪 Deutsch](i18n/README.de.md) ·
+[🇫🇷 Français](i18n/README.fr.md) ·
+[🇪🇸 Español](i18n/README.es.md) ·
+[🇯🇵 日本語](i18n/README.ja.md)
+
 > [!NOTE]
 > PoE2Dire is an unofficial fan-made project and is not affiliated with, associated with, endorsed by, or sponsored by Grinding Gear Games or Path of Exile.
 
 # PoE2Dire
 
-Extension for rendering Path of Exile (1 and 2) patch notes in a Dota2-style layout (English only at this moment). 
+Extension for rendering Path of Exile (1 and 2) patch notes in a Dota2-style layout. 
 [Based on this reddit thread](https://www.reddit.com/r/PathOfExile2/comments/1tkazjr/can_someone_explain_to_me_why_ggg_doesnt_present/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button). 
 
 [Reddit thread](https://www.reddit.com/r/PathOfExile2/comments/1toxfei/dota2_style_patch_notes_browser_extension/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button) of the extension in Path of Exile 2 sub.
@@ -16,9 +25,18 @@ The extension only injects on:
 
 ```text
 https://www.pathofexile.com/forum/*
+https://br.pathofexile.com/forum/*
+https://ru.pathofexile.com/forum/*
+https://th.pathofexile.com/forum/*
+https://de.pathofexile.com/forum/*
+https://fr.pathofexile.com/forum/*
+https://es.pathofexile.com/forum/*
+https://jp.pathofexile.com/forum/*
 ```
 
 It still declares access to `poewiki.net` and `poe2wiki.net` for info lookup and assets.
+
+Additionally, `cdn.poedb.tw` and `cdn.poe2db.tw` are used for fast icon lookup.
 
 
 ## How to use?

@@ -8,10 +8,21 @@
     ".forum-table-container .content",
   ];
 
+  const FORUM_ORIGINS = new Set([
+    "https://www.pathofexile.com",
+    "https://br.pathofexile.com",
+    "https://ru.pathofexile.com",
+    "https://th.pathofexile.com",
+    "https://de.pathofexile.com",
+    "https://fr.pathofexile.com",
+    "https://es.pathofexile.com",
+    "https://jp.pathofexile.com",
+  ]);
+
   function isAllowedForumUrl(url) {
     try {
       const parsed = new URL(url);
-      return parsed.origin === "https://www.pathofexile.com" && parsed.pathname.startsWith("/forum/");
+      return FORUM_ORIGINS.has(parsed.origin) && parsed.pathname.startsWith("/forum/");
     } catch (error) {
       return false;
     }
@@ -55,7 +66,7 @@
       }
 
       if (node.matches("h1,h2,h3,h4,h5")) {
-        pushToken("heading", textOf(node), node);
+        pushToken("heading", textOf(node), node, Number(node.tagName.slice(1)));
         return;
       }
 
@@ -85,7 +96,7 @@
       if (entries.length) tokens.push({ type: "toc", text: "", image: "", links: [], entries });
     }
 
-    function pushToken(type, text, element) {
+    function pushToken(type, text, element, level) {
       const clean = cleanText(text);
       if (!clean || clean === "Return to top") return;
       tokens.push({
@@ -93,6 +104,7 @@
         text: clean,
         image: firstImage(element),
         links: linksOf(element),
+        level: level || 0,
       });
     }
 
@@ -118,7 +130,7 @@
     if (!anchors.every((anchor) => (anchor.getAttribute("href") || "").includes("#"))) return false;
 
     const listText = cleanText(node.textContent).replace(/\s+/g, " ");
-    const linkText = anchors.map((anchor) => cleanText(anchor.textContent)).join(" ").replace(/\s+/g, " ");
+    const linkText = anchors.map((anchor) => cleanText(anchor.textContent)).filter(Boolean).join(" ").replace(/\s+/g, " ");
     return listText === linkText;
   }
 

@@ -10,9 +10,11 @@
   const ENTITY_SECTION_PATTERN = /Ascendancy|Skill|Support|Unique|Item|Monster|Passive|Vaal Gem/i;
 
   function parsePatch(tokens) {
-    const titleToken = tokens.find((token) => /Content Update|Patch Notes/i.test(token.text));
-    const title = titleToken ? titleToken.text : document.title.replace(" - Forum - Path of Exile", "");
+    const titleToken = findTitleToken(tokens);
+    const title = titleToken ? titleToken.text : documentPatchTitle();
     const version = title.match(/\b\d+\.\d+\.\d+[a-z]?\b/i)?.[0] || "Patch";
+    const entityNames = entityNamesFor(title, version);
+    const entityIcons = entityIconsFor(title, version);
 
     const patch = {
       title,
@@ -25,6 +27,7 @@
     let currentSection = null;
     let currentGroup = null;
     const introTokens = [];
+    const introImages = [];
 
     for (let index = 0; index < tokens.length; index += 1) {
       const token = tokens[index];
@@ -32,8 +35,14 @@
         if (!currentSection) patch.toc.push(...(token.entries || []));
         continue;
       }
-      if (token === titleToken || token.type === "image") continue;
-      if (token.text === title || token.text === "Table of Contents") continue;
+      if (token === titleToken) continue;
+      if (token.type === "image") {
+        if (currentSection) currentSection.images.push(imageItem(token));
+        else introImages.push(imageItem(token));
+        continue;
+      }
+      if (token.text === title) continue;
+      if (token.type === "heading" && tokens[index + 1]?.type === "toc") continue;
 
       // Some update sections repeat their own title as a visual separator.
       if (isPatchUpdateTitle(token.text) && currentSection && isPatchUpdateSection(currentSection.title)) {
@@ -110,6 +119,26 @@
           continue;
         }
 
+        const annotated = findAnnotatedEntity(token.text);
+        if (annotated) {
+          currentGroup = findOrAddGroup(currentSection, annotated.localized, token.image, token.text);
+          currentGroup.iconKind = knownEntityKind(annotated.title, entityNames);
+          currentGroup.wikiTitle = annotated.title;
+          currentGroup.entity = true;
+          currentGroup.items.push(changeItem(formatChange(token.text, currentGroup.title), token));
+          continue;
+        }
+
+        const named = findNamedEntity(token.text, entityNames);
+        if (named) {
+          currentGroup = findOrAddGroup(currentSection, named.localized, token.image, token.text);
+          currentGroup.iconKind = named.kind;
+          currentGroup.wikiTitle = named.title;
+          currentGroup.entity = true;
+          currentGroup.items.push(changeItem(formatChange(token.text, currentGroup.title), token));
+          continue;
+        }
+
         const entitySection = isEntitySection(currentSection.title);
         const entity = entitySection ? extractEntityTitle(token.text, currentSection.title) : "";
         const split = currentGroup?.iconKind === "ascendancy" && isAscendancySection(currentSection.title)
@@ -124,10 +153,13 @@
       }
     }
 
-    if (patch.sections.length && introTokens.length) {
+    if (patch.sections.length && (introTokens.length || introImages.length)) {
       const section = addSection(patch, "Overview", "", "start");
-      const group = addGroup(section, "Patch Notes", "");
-      group.items.push(...introTokens.map((token) => changeItem(token.text, token)));
+      section.images = introImages;
+      if (introTokens.length) {
+        const group = addGroup(section, "Patch Notes", "");
+        group.items.push(...introTokens.map((token) => changeItem(token.text, token)));
+      }
     }
 
     if (!patch.sections.length && introTokens.length) {
@@ -149,9 +181,20 @@
 
     patch.sections.forEach((section) => {
       section.groups = section.groups.filter(groupHasItems);
+      section.groups.forEach((group) => {
+        if (group.icon) return;
+        const icon = entityIcons[String(group.wikiTitle || "").toLowerCase()];
+        if (!icon) return;
+        group.icon = icon;
+        group.source = "PoEDB";
+      });
     });
-    patch.sections = patch.sections.filter((section) => section.groups.length > 0);
+    patch.sections = patch.sections.filter((section) => section.groups.length > 0 || section.images.length > 0);
     return patch;
+  }
+
+  function imageItem(token) {
+    return { src: token.image, alt: token.text || "" };
   }
 
   function addSection(patch, title, image, position) {
@@ -159,6 +202,7 @@
       title,
       displayTitle: SECTION_ALIASES[title] || title,
       groups: [],
+      images: [],
     };
     if (position === "start") patch.sections.unshift(section);
     else patch.sections.push(section);
@@ -202,8 +246,20 @@
   }
 
   function isMainSection(token) {
-    if (token.type !== "heading") return false;
-    return /changes|updates|fixes|balance|league|endgame|campaign|content|features/i.test(token.text);
+    return token.type === "heading";
+  }
+
+  function findTitleToken(tokens) {
+    const headings = tokens.filter((token) => token.type === "heading" && token.level);
+    if (headings.length) {
+      const topLevel = Math.min(...headings.map((token) => token.level));
+      return headings.find((token) => token.level === topLevel);
+    }
+    return tokens.find((token) => /Content Update|Patch Notes/i.test(token.text)) || null;
+  }
+
+  function documentPatchTitle() {
+    return cleanText(document.title.replace(/\s*-\s*[^-]*-\s*Path of Exile\s*$/i, ""));
   }
 
   function isPatchUpdateTitle(text) {

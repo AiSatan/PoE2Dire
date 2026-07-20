@@ -111,9 +111,26 @@
         rendered.id = groupAnchorId(index, section.groups.indexOf(group));
         return rendered;
       })),
+      renderSectionImages(doc, section),
     ]);
     node.id = sectionAnchorId(index);
     return node;
+  }
+
+  function renderSectionImages(doc, section) {
+    if (!section.images?.length) return null;
+
+    return el("div", "pdp-section-images", section.images.map((image) => {
+      const figure = el("figure", "pdp-figure");
+      const img = doc.createElement("img");
+      img.src = image.src;
+      img.alt = image.alt || "";
+      img.loading = "lazy";
+      img.decoding = "async";
+      figure.append(img);
+      if (image.alt) figure.append(el("figcaption", "pdp-figure-caption", image.alt));
+      return figure;
+    }));
   }
 
   function sectionAnchorId(index) {
@@ -287,18 +304,22 @@
   }
 
   function orderedSectionGroups(section) {
-    if (!isEntitySection(section.title)) return section.groups;
+    const entitySection = isEntitySection(section.title);
+    if (!entitySection && !section.groups.some((group) => group.entity)) return section.groups;
 
     const general = [];
     const entities = [];
     for (const group of section.groups) {
-      if (group.title === section.title) general.push(group);
-      else entities.push(group);
+      if (group.entity) entities.push(group);
+      else if (entitySection && group.title !== section.title) entities.push(group);
+      else general.push(group);
     }
     return general.concat(entities);
   }
 
   function renderGroup(doc, section, group) {
+    if (group.entity) return renderEntityGroup(doc, group);
+
     if (isEntitySection(section.title) && group.title === section.title) {
       return renderGeneralList(doc, group);
     }
