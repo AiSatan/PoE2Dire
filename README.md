@@ -1,11 +1,11 @@
 🇬🇧 English ·
-[🇧🇷 Português](README.pt-br.md) ·
-[🇷🇺 Русский](README.ru.md) ·
-[🇹🇭 ไทย](README.th.md) ·
-[🇩🇪 Deutsch](README.de.md) ·
-[🇫🇷 Français](README.fr.md) ·
-[🇪🇸 Español](README.es.md) ·
-[🇯🇵 日本語](README.ja.md)
+[🇧🇷 Português](i18n/README.pt-br.md) ·
+[🇷🇺 Русский](i18n/README.ru.md) ·
+[🇹🇭 ไทย](i18n/README.th.md) ·
+[🇩🇪 Deutsch](i18n/README.de.md) ·
+[🇫🇷 Français](i18n/README.fr.md) ·
+[🇪🇸 Español](i18n/README.es.md) ·
+[🇯🇵 日本語](i18n/README.ja.md)
 
 > [!NOTE]
 > PoE2Dire is an unofficial fan-made project and is not affiliated with, associated with, endorsed by, or sponsored by Grinding Gear Games or Path of Exile.

@@ -1,4 +1,4 @@
-[🇬🇧 English](README.md) ·
+[🇬🇧 English](../README.md) ·
 [🇧🇷 Português](README.pt-br.md) ·
 [🇷🇺 Русский](README.ru.md) ·
 [🇹🇭 ไทย](README.th.md) ·
@@ -9,7 +9,7 @@
 
 > [!IMPORTANT]
 > **Cette traduction a été générée automatiquement et n'a pas été relue par un locuteur natif.**
-> Elle peut contenir des erreurs et des imprécisions. L'original en anglais : [README.md](README.md).
+> Elle peut contenir des erreurs et des imprécisions. L'original en anglais : [README.md](../README.md).
 > Toute aide pour l'améliorer est la bienvenue — n'hésitez pas à ouvrir une PR ou une issue !
 
 > [!NOTE]
