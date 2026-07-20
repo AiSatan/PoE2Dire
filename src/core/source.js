@@ -150,7 +150,7 @@
     const result = [];
     for (const token of tokens) {
       const last = result[result.length - 1];
-      if (last && last.type === token.type && last.text === token.text) continue;
+      if (last && last.type === token.type && last.text === token.text && last.image === token.image) continue;
       if (last && last.type === "text" && token.type === "text") {
         last.text = joinTextTokens(last.text, token.text);
         last.links = (last.links || []).concat(token.links || []);
