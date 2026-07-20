@@ -26,6 +26,7 @@
     let currentSection = null;
     let currentGroup = null;
     const introTokens = [];
+    const introImages = [];
 
     for (let index = 0; index < tokens.length; index += 1) {
       const token = tokens[index];
@@ -33,7 +34,12 @@
         if (!currentSection) patch.toc.push(...(token.entries || []));
         continue;
       }
-      if (token === titleToken || token.type === "image") continue;
+      if (token === titleToken) continue;
+      if (token.type === "image") {
+        if (currentSection) currentSection.images.push(imageItem(token));
+        else introImages.push(imageItem(token));
+        continue;
+      }
       if (token.text === title) continue;
       if (token.type === "heading" && tokens[index + 1]?.type === "toc") continue;
 
@@ -136,10 +142,13 @@
       }
     }
 
-    if (patch.sections.length && introTokens.length) {
+    if (patch.sections.length && (introTokens.length || introImages.length)) {
       const section = addSection(patch, "Overview", "", "start");
-      const group = addGroup(section, "Patch Notes", "");
-      group.items.push(...introTokens.map((token) => changeItem(token.text, token)));
+      section.images = introImages;
+      if (introTokens.length) {
+        const group = addGroup(section, "Patch Notes", "");
+        group.items.push(...introTokens.map((token) => changeItem(token.text, token)));
+      }
     }
 
     if (!patch.sections.length && introTokens.length) {
@@ -162,8 +171,12 @@
     patch.sections.forEach((section) => {
       section.groups = section.groups.filter(groupHasItems);
     });
-    patch.sections = patch.sections.filter((section) => section.groups.length > 0);
+    patch.sections = patch.sections.filter((section) => section.groups.length > 0 || section.images.length > 0);
     return patch;
+  }
+
+  function imageItem(token) {
+    return { src: token.image, alt: token.text || "" };
   }
 
   function addSection(patch, title, image, position) {
@@ -171,6 +184,7 @@
       title,
       displayTitle: SECTION_ALIASES[title] || title,
       groups: [],
+      images: [],
     };
     if (position === "start") patch.sections.unshift(section);
     else patch.sections.push(section);

@@ -111,9 +111,26 @@
         rendered.id = groupAnchorId(index, section.groups.indexOf(group));
         return rendered;
       })),
+      renderSectionImages(doc, section),
     ]);
     node.id = sectionAnchorId(index);
     return node;
+  }
+
+  function renderSectionImages(doc, section) {
+    if (!section.images?.length) return null;
+
+    return el("div", "pdp-section-images", section.images.map((image) => {
+      const figure = el("figure", "pdp-figure");
+      const img = doc.createElement("img");
+      img.src = image.src;
+      img.alt = image.alt || "";
+      img.loading = "lazy";
+      img.decoding = "async";
+      figure.append(img);
+      if (image.alt) figure.append(el("figcaption", "pdp-figure-caption", image.alt));
+      return figure;
+    }));
   }
 
   function sectionAnchorId(index) {
