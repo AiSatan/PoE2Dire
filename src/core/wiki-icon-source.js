@@ -5,6 +5,7 @@
     const failed = new Set();
 
     await queryPredictableFileIcons(endpoint, jobs, found, onResult);
+    await queryBatchedPassiveIcons(endpoint, jobs, found, onResult);
 
     const remainingJobs = jobs.filter((job) => !found.has(job.key));
     const existingTitles = await queryExistingTitles(endpoint, remainingJobs);
@@ -45,7 +46,20 @@
       }
     });
 
+    const images = await queryImageInfoUrls(endpoint, fileTitles, `${endpoint.name} File`);
+
+    candidatesByJob.forEach((candidates, job) => {
+      if (found.has(job.key)) return;
+      const image = candidates.map((key) => images.get(key)).find(Boolean);
+      if (!image) return;
+      found.set(job.key, image);
+      if (onResult) onResult(job, image, false);
+    });
+  }
+
+  async function queryImageInfoUrls(endpoint, fileTitles, source) {
     const images = new Map();
+
     for (const chunk of chunks(fileTitles, CONFIG.wikiBatchSize)) {
       let json = null;
       try {
@@ -57,20 +71,83 @@
       Object.values(json.query?.pages || {}).forEach((page) => {
         const imageUrl = page.imageinfo?.[0]?.thumburl || page.imageinfo?.[0]?.url;
         if (!imageUrl) return;
-        images.set(normalWikiTitle(page.title), {
-          url: imageUrl,
-          source: `${endpoint.name} File`,
-        });
+        images.set(normalWikiTitle(page.title), { url: imageUrl, source });
       });
     }
 
+    return images;
+  }
+
+  async function queryBatchedPassiveIcons(endpoint, jobs, found, onResult) {
+    const candidatesByJob = new Map();
+    const titles = [];
+    const seenTitles = new Set();
+
+    jobs.filter(isPassiveIconJob).forEach((job) => {
+      if (found.has(job.key)) return;
+      iconLookupCandidateTitles(job.title, job.kind).forEach((title) => {
+        const key = normalWikiTitle(title);
+        const candidates = candidatesByJob.get(job) || [];
+        candidates.push(key);
+        candidatesByJob.set(job, candidates);
+        if (seenTitles.has(key)) return;
+        seenTitles.add(key);
+        titles.push(title);
+      });
+    });
+
+    if (!titles.length) return;
+
+    const iconFiles = await queryPassiveIconFiles(endpoint, titles);
+    if (!iconFiles.size) return;
+
+    const fileTitles = Array.from(new Set(Array.from(iconFiles.values())));
+    const images = await queryImageInfoUrls(endpoint, fileTitles, `${endpoint.name} Cargo`);
+
     candidatesByJob.forEach((candidates, job) => {
       if (found.has(job.key)) return;
-      const image = candidates.map((key) => images.get(key)).find(Boolean);
+      const file = candidates.map((key) => iconFiles.get(key)).find(Boolean);
+      const image = file ? images.get(normalWikiTitle(file)) : null;
       if (!image) return;
       found.set(job.key, image);
       if (onResult) onResult(job, image, false);
     });
+  }
+
+  async function queryPassiveIconFiles(endpoint, titles) {
+    const iconFiles = new Map();
+
+    for (const chunk of chunks(titles, CONFIG.wikiBatchSize)) {
+      let json = null;
+      try {
+        json = await fetchJsonWithRetry(wikiApiUrl(endpoint, {
+          action: "cargoquery",
+          tables: "passive_skills",
+          fields: "name,icon",
+          where: `name IN (${cargoNameList(chunk)})`,
+          limit: "500",
+        }));
+      } catch (error) {
+        break;
+      }
+
+      (json.cargoquery || []).forEach((row) => {
+        const name = row?.title?.name;
+        const icon = row?.title?.icon;
+        if (name && icon) iconFiles.set(normalWikiTitle(name), icon);
+      });
+    }
+
+    return iconFiles;
+  }
+
+  function isPassiveIconJob(job) {
+    if (job.kind === "passive") return true;
+    return job.kind === "ascendancy" && !validAscendancyClassTitle(job.title);
+  }
+
+  function cargoNameList(titles) {
+    return titles.map((title) => `'${String(title).replace(/'/g, "''")}'`).join(",");
   }
 
   function predictableFileIconLookups(jobs) {

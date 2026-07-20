@@ -25,30 +25,23 @@
     return stored;
   }
 
-  async function writeStoredIconResults(store, jobs, storeKeys, stored, resolved, lookupFailed) {
-    const writes = new Map();
+  async function writeStoredIconResult(store, storeKey, job, image) {
+    if (!storeKey) return;
+    if (!image && !shouldCacheMissingIcon(job)) return;
 
-    for (const job of jobs) {
-      const key = storeKeys.get(job.key);
-      if (!key || stored.has(key) || lookupFailed.has(job.key)) continue;
-
-      const image = resolved.get(job.key);
-      if (!image && !shouldCacheMissingIcon(job)) continue;
-
-      writes.set(key, image ? {
-        url: image.url,
-        source: image.source,
-        cachedAt: Date.now(),
-        expiresAt: Date.now() + CONFIG.cache.hitTtlMs,
-      } : {
-        missing: true,
-        cachedAt: Date.now(),
-        expiresAt: Date.now() + CONFIG.cache.missTtlMs,
-      });
-    }
+    const entry = image ? {
+      url: image.url,
+      source: image.source,
+      cachedAt: Date.now(),
+      expiresAt: Date.now() + CONFIG.cache.hitTtlMs,
+    } : {
+      missing: true,
+      cachedAt: Date.now(),
+      expiresAt: Date.now() + CONFIG.cache.missTtlMs,
+    };
 
     try {
-      await store.setMany(writes);
+      await store.set(storeKey, entry);
     } catch (error) {}
   }
 

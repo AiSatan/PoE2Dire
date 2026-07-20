@@ -1,3 +1,7 @@
+  const POE2_TITLE_PATTERN = /Path of Exile 2\b/i;
+  const POE1_TITLE_PATTERN = /Path of Exile\b(?!\s*2\b)/i;
+  const POE2_VERSION_PATTERN = /^0\./;
+
   async function resolveIcons(patch, onUpdate) {
     const groups = patch.sections.flatMap((section) => section.groups);
     const jobs = collectIconJobs(groups);
@@ -31,7 +35,7 @@
       renderWikiStatusPill(document);
     };
 
-    const stored = await readStoredIconResults(store, jobs, storeKeys, resolved, knownMissing);
+    await readStoredIconResults(store, jobs, storeKeys, resolved, knownMissing);
     applyResolvedIconResults(groups, resolved);
     applyMissingIconResults(groups, knownMissing);
     updateIconStatus();
@@ -48,6 +52,7 @@
 
         if (image) {
           resolved.set(job.key, image);
+          writeStoredIconResult(store, storeKeys.get(job.key), job, image);
           applyResolvedIconResults(groups, new Map([[job.key, image]]));
           updateIconStatus();
           notifyIconUpdate(onUpdate, patch);
@@ -61,6 +66,7 @@
           applyDefaultIconResults(groups, new Set([job.key]));
         } else {
           knownMissing.add(job.key);
+          writeStoredIconResult(store, storeKeys.get(job.key), job, null);
           applyMissingIconResults(groups, new Set([job.key]));
         }
         updateIconStatus();
@@ -68,10 +74,11 @@
       });
       result.found.forEach((image, key) => resolved.set(key, image));
       result.failed.forEach((key) => lookupFailed.add(key));
+
+      if (result.failed.size >= missingJobs.length) break;
     }
 
     applyIconResults(groups, resolved, jobs, lookupFailed);
-    await writeStoredIconResults(store, jobs, storeKeys, stored, resolved, lookupFailed);
 
     state.wikiDone = true;
     status.done = true;
@@ -142,9 +149,16 @@
   }
 
   function apiEndpointsForPatch(patch) {
-    return /Path of Exile 2/i.test(patch.title)
-      ? [CONFIG.apiEndpoints[0]]
-      : [CONFIG.apiEndpoints[1]];
+    const [poe2Wiki, poe1Wiki] = CONFIG.apiEndpoints;
+    return prefersPoe2Wiki(patch)
+      ? [poe2Wiki, poe1Wiki]
+      : [poe1Wiki, poe2Wiki];
+  }
+
+  function prefersPoe2Wiki(patch) {
+    if (POE2_TITLE_PATTERN.test(patch.title)) return true;
+    if (POE1_TITLE_PATTERN.test(patch.title)) return false;
+    return POE2_VERSION_PATTERN.test(patch.version);
   }
 
   function applyIconResults(groups, resolved, jobs, lookupFailed) {
