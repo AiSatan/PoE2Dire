@@ -10,9 +10,10 @@
   const ENTITY_SECTION_PATTERN = /Ascendancy|Skill|Support|Unique|Item|Monster|Passive|Vaal Gem/i;
 
   function parsePatch(tokens) {
-    const titleToken = tokens.find((token) => /Content Update|Patch Notes/i.test(token.text));
-    const title = titleToken ? titleToken.text : document.title.replace(" - Forum - Path of Exile", "");
+    const titleToken = findTitleToken(tokens);
+    const title = titleToken ? titleToken.text : documentPatchTitle();
     const version = title.match(/\b\d+\.\d+\.\d+[a-z]?\b/i)?.[0] || "Patch";
+    const gemNames = gemNamesFor(title, version);
 
     const patch = {
       title,
@@ -33,7 +34,8 @@
         continue;
       }
       if (token === titleToken || token.type === "image") continue;
-      if (token.text === title || token.text === "Table of Contents") continue;
+      if (token.text === title) continue;
+      if (token.type === "heading" && tokens[index + 1]?.type === "toc") continue;
 
       // Some update sections repeat their own title as a visual separator.
       if (isPatchUpdateTitle(token.text) && currentSection && isPatchUpdateSection(currentSection.title)) {
@@ -107,6 +109,16 @@
           currentGroup = findOrAddGroup(currentSection, ascendancyClass, token.image, token.text);
           currentGroup.iconKind = "ascendancy";
           currentGroup.wikiTitle = ascendancyClass;
+          continue;
+        }
+
+        const gem = findGemEntity(token.text, gemNames);
+        if (gem) {
+          currentGroup = findOrAddGroup(currentSection, gem.localized, token.image, token.text);
+          currentGroup.iconKind = gem.kind;
+          currentGroup.wikiTitle = gem.title;
+          currentGroup.entity = true;
+          currentGroup.items.push(changeItem(formatChange(token.text, currentGroup.title), token));
           continue;
         }
 
@@ -202,8 +214,20 @@
   }
 
   function isMainSection(token) {
-    if (token.type !== "heading") return false;
-    return /changes|updates|fixes|balance|league|endgame|campaign|content|features/i.test(token.text);
+    return token.type === "heading";
+  }
+
+  function findTitleToken(tokens) {
+    const headings = tokens.filter((token) => token.type === "heading" && token.level);
+    if (headings.length) {
+      const topLevel = Math.min(...headings.map((token) => token.level));
+      return headings.find((token) => token.level === topLevel);
+    }
+    return tokens.find((token) => /Content Update|Patch Notes/i.test(token.text)) || null;
+  }
+
+  function documentPatchTitle() {
+    return cleanText(document.title.replace(/\s*-\s*[^-]*-\s*Path of Exile\s*$/i, ""));
   }
 
   function isPatchUpdateTitle(text) {

@@ -16,6 +16,13 @@
   ],
   "host_permissions": [
     "https://www.pathofexile.com/forum/*",
+    "https://br.pathofexile.com/forum/*",
+    "https://ru.pathofexile.com/forum/*",
+    "https://th.pathofexile.com/forum/*",
+    "https://de.pathofexile.com/forum/*",
+    "https://fr.pathofexile.com/forum/*",
+    "https://es.pathofexile.com/forum/*",
+    "https://jp.pathofexile.com/forum/*",
     "https://www.poewiki.net/*",
     "https://www.poe2wiki.net/*"
   ],
@@ -34,7 +41,14 @@
   "content_scripts": [
     {
       "matches": [
-        "https://www.pathofexile.com/forum/*"
+        "https://www.pathofexile.com/forum/*",
+        "https://br.pathofexile.com/forum/*",
+        "https://ru.pathofexile.com/forum/*",
+        "https://th.pathofexile.com/forum/*",
+        "https://de.pathofexile.com/forum/*",
+        "https://fr.pathofexile.com/forum/*",
+        "https://es.pathofexile.com/forum/*",
+        "https://jp.pathofexile.com/forum/*"
       ],
       "css": [
         "core/styles.css",
