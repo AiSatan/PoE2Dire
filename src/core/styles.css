@@ -168,6 +168,7 @@
 .pdp-icon {
   display: grid;
   place-items: center;
+  box-sizing: border-box;
   width: 4.55rem;
   min-height: 4.55rem;
   height: fit-content;
